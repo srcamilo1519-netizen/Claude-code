@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Basketball Legends 3D — an immersive editorial journey through the greatest NBA teams, players and moments. Where History Lives. Where Legends Rise." />
+<title>Basketball Legends 3D — Where History Lives. Where Legends Rise.</title>
+
+<!--
+  ============================================================================
+  BASKETBALL LEGENDS 3D EXPERIENCE
+  ----------------------------------------------------------------------------
+  Single-file, self-contained, dependency-free (only YouTube iframes).
+  Vanilla JS + CSS 3D transforms + IntersectionObserver + scroll parallax.
+
+  IMAGE SOURCES: Wikimedia Commons (public/CC) + Unsplash (free license).
+  Every <img> has loading="lazy", descriptive alt text, and an onerror
+  fallback to a themed gradient so the layout never breaks if a remote
+  asset is unavailable.
+
+  VIDEO SOURCES: YouTube embeds (NBA / official highlight channels).
+  ============================================================================
+-->
+
+<style>
+  /* ===================== COLOR SYSTEM ===================== */
+  :root{
+    --primary:        #0a0e27; /* deep black-blue */
+    --secondary:      #1a3a52; /* dark night blue */
+    --accent:         #00bfff; /* electric blue */
+    --tertiary:       #1e5a8e; /* mid blue */
+    --text:           #ffffff;
+    --text-soft:      #a0aec0;
+    --bg-soft:        #0f1629;
+    --card:           #11182f;
+    --glass:          rgba(17,24,47,.55);
+    --ease:           cubic-bezier(0.25,0.46,0.45,0.94);
+    --serif:          Georgia, "Times New Roman", Garamond, serif;
+    --sans:           "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(0,191,255,.10), transparent 60%),
+      radial-gradient(1000px 700px at 0% 30%, rgba(30,90,142,.14), transparent 55%),
+      linear-gradient(180deg, var(--primary) 0%, var(--bg-soft) 50%, var(--primary) 100%);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.7;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* root perspective wrapper for global 3D depth */
+  .stage{
+    perspective:1200px;
+    perspective-origin:50% 30%;
+  }
+
+  ::selection{ background:var(--accent); color:var(--primary); }
+
+  /* ===================== TYPOGRAPHY ===================== */
+  h1,h2,h3{ font-family:var(--serif); font-weight:800; letter-spacing:.5px; line-height:1.15; }
+  h1{ font-size:clamp(2.6rem,7vw,5.5rem); }
+  h2{ font-size:clamp(2rem,4.5vw,3rem); }
+  h3{ font-size:clamp(1.4rem,3vw,1.9rem); }
+  p{ color:var(--text-soft); }
+  a{ color:var(--accent); text-decoration:none; }
+
+  .eyebrow{
+    font-family:var(--sans); font-weight:700; font-size:.8rem;
+    letter-spacing:.32em; text-transform:uppercase; color:var(--accent);
+    display:inline-block; margin-bottom:1rem;
+  }
+
+  /* ===================== LAYOUT ===================== */
+  section{ padding:6rem 1.5rem; position:relative; }
+  .wrap{ max-width:1200px; margin:0 auto; }
+  .section-head{ text-align:center; max-width:760px; margin:0 auto 3.5rem; }
+  .section-head p{ font-size:1.05rem; margin-top:.6rem; }
+
+  /* ===================== NAV ===================== */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 1.5rem;
+    background:linear-gradient(180deg, rgba(10,14,39,.92), rgba(10,14,39,0));
+    backdrop-filter:blur(8px);
+    transition:padding .3s var(--ease), background .3s var(--ease);
+  }
+  nav.shrink{ padding:.55rem 1.5rem; background:rgba(10,14,39,.92); }
+  .brand{ font-family:var(--serif); font-weight:800; font-size:1.15rem; letter-spacing:1px; }
+  .brand b{ color:var(--accent); }
+  .nav-links{ display:flex; gap:1.4rem; }
+  .nav-links a{
+    color:var(--text-soft); font-size:.85rem; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase; transition:color .25s var(--ease);
+  }
+  .nav-links a:hover{ color:var(--accent); }
+  @media(max-width:780px){ .nav-links{ display:none; } }
+
+  /* ===================== HERO ===================== */
+  .hero{
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    position:relative; overflow:hidden; padding:7rem 1.5rem 4rem;
+  }
+  .hero-bg{
+    position:absolute; inset:-10%;
+    background:
+      radial-gradient(60% 60% at 50% 40%, rgba(0,191,255,.18), transparent 70%),
+      url('https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1600&q=80');
+    background-size:cover; background-position:center;
+    opacity:.30; filter:saturate(1.1) brightness(.7);
+    will-change:transform; z-index:0;
+  }
+  .hero-bg::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(10,14,39,.5) 0%, rgba(10,14,39,.85) 70%, var(--primary) 100%);
+  }
+  .hero-inner{ position:relative; z-index:2; transform-style:preserve-3d; }
+  .hero h1{
+    background:linear-gradient(180deg,#fff 30%, #9ad8ff 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 30px 80px rgba(0,191,255,.15);
+  }
+  .hero .tag{
+    font-family:var(--serif); font-style:italic; font-size:clamp(1.1rem,2.6vw,1.6rem);
+    color:var(--text); margin-top:1.2rem; opacity:.92;
+  }
+  .hero .sub{ max-width:560px; margin:1.4rem auto 0; font-size:1.05rem; }
+  .scroll-ind{
+    position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
+    z-index:3; display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    color:var(--text-soft); font-size:.72rem; letter-spacing:.25em; text-transform:uppercase;
+  }
+  .mouse{
+    width:26px; height:42px; border:2px solid var(--accent); border-radius:14px;
+    position:relative;
+  }
+  .mouse::before{
+    content:""; position:absolute; top:7px; left:50%; transform:translateX(-50%);
+    width:4px; height:8px; background:var(--accent); border-radius:2px;
+    animation:wheel 1.6s infinite var(--ease);
+  }
+  @keyframes wheel{ 0%{opacity:0; transform:translate(-50%,0);} 40%{opacity:1;} 100%{opacity:0; transform:translate(-50%,16px);} }
+
+  /* ===================== REVEAL (IntersectionObserver) ===================== */
+  .reveal{ opacity:0; transform:translateZ(-300px) translateY(40px); transition:opacity .9s var(--ease), transform 1s var(--ease); }
+  .reveal.in{ opacity:1; transform:translateZ(0) translateY(0); }
+  .reveal.rx{ transform:rotateX(-15deg) translateY(60px); transform-origin:bottom; }
+  .reveal.rx.in{ transform:rotateX(0) translateY(0); }
+  .reveal.ry{ transform:rotateY(-25deg) translateZ(-200px); }
+  .reveal.ry.in{ transform:rotateY(0) translateZ(0); }
+  @media(prefers-reduced-motion:reduce){
+    .reveal{ opacity:1 !important; transform:none !important; }
+    html{ scroll-behavior:auto; }
+  }
+
+  /* ===================== TEAM CARDS ===================== */
+  .teams{ display:grid; gap:2.5rem; }
+  .team{
+    display:grid; grid-template-columns:1.1fr 1fr; gap:2rem;
+    background:linear-gradient(135deg, var(--card), rgba(26,58,82,.35));
+    border:1px solid rgba(0,191,255,.12); border-radius:16px; overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.45);
+    transform-style:preserve-3d;
+  }
+  .team:nth-child(even){ grid-template-columns:1fr 1.1fr; }
+  .team:nth-child(even) .team-media{ order:2; }
+  @media(max-width:880px){ .team,.team:nth-child(even){ grid-template-columns:1fr; } .team:nth-child(even) .team-media{ order:0; } }
+  .team-media{ position:relative; min-height:300px; }
+  .team-shots{ display:grid; grid-template-columns:1fr 1fr; gap:2px; height:100%; }
+  .team-shots img{ width:100%; height:100%; object-fit:cover; min-height:150px; display:block; filter:saturate(1.05); transition:transform .6s var(--ease); }
+  .team-shots img:hover{ transform:scale(1.06); }
+  .accent-bar{ height:6px; width:100%; }
+  .team-body{ padding:2.2rem; }
+  .team-era{ color:var(--accent); font-weight:700; font-size:.82rem; letter-spacing:.15em; text-transform:uppercase; }
+  .team-body h3{ margin:.3rem 0 .8rem; }
+  .stats-row{ display:flex; flex-wrap:wrap; gap:1.4rem; margin:1.2rem 0; }
+  .stat b{ display:block; font-family:var(--serif); font-size:1.7rem; color:var(--accent); }
+  .stat span{ font-size:.78rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; }
+  .titles{ display:flex; flex-wrap:wrap; gap:.4rem; margin:1rem 0; }
+  .pill{ font-size:.72rem; padding:.3rem .7rem; border:1px solid rgba(0,191,255,.3); border-radius:20px; color:var(--text-soft); }
+
+  /* video embed */
+  .video{ position:relative; aspect-ratio:16/9; border-radius:12px; overflow:hidden; margin-top:1rem; border:1px solid rgba(0,191,255,.15); }
+  .video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+
+  /* ===================== PLAYER CARDS (flip) ===================== */
+  .players-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:1.8rem; }
+  .pcard{ perspective:1000px; height:380px; }
+  .pcard-inner{
+    position:relative; width:100%; height:100%; transition:transform .8s var(--ease);
+    transform-style:preserve-3d;
+  }
+  .pcard:hover .pcard-inner, .pcard:focus-within .pcard-inner{ transform:rotateY(180deg); }
+  .pface{
+    position:absolute; inset:0; border-radius:16px; overflow:hidden;
+    backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border:1px solid rgba(0,191,255,.15); box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .pfront{ display:flex; flex-direction:column; justify-content:flex-end; }
+  .pfront img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:top center; }
+  .pfront .grad{ position:absolute; inset:0; background:linear-gradient(180deg, transparent 35%, rgba(10,14,39,.95) 92%); }
+  .pfront .pinfo{ position:relative; padding:1.2rem; z-index:2; }
+  .pfront .pinfo h3{ font-size:1.25rem; }
+  .pfront .pinfo .meta{ font-size:.78rem; color:var(--accent); font-weight:600; letter-spacing:.05em; }
+  .pfront .num{ position:absolute; top:.8rem; right:1rem; font-family:var(--serif); font-size:2.4rem; font-weight:900; color:rgba(0,191,255,.7); z-index:2; }
+  .pback{
+    transform:rotateY(180deg);
+    background:linear-gradient(160deg, var(--secondary), var(--card));
+    padding:1.4rem; display:flex; flex-direction:column; gap:.5rem;
+  }
+  .pback h4{ font-family:var(--serif); font-size:1.15rem; color:var(--accent); }
+  .pback .stat-line{ display:flex; justify-content:space-between; font-size:.85rem; border-bottom:1px solid rgba(255,255,255,.08); padding:.25rem 0; }
+  .pback .stat-line span:first-child{ color:var(--text-soft); }
+  .pback .lyric{ font-family:var(--serif); font-style:italic; font-size:.85rem; color:#cfe9ff; margin-top:auto; }
+  .pback .moment{ font-size:.78rem; }
+  .group-label{ grid-column:1/-1; font-family:var(--serif); font-size:1.3rem; color:var(--text); border-left:3px solid var(--accent); padding-left:.8rem; margin-top:1rem; }
+
+  /* ===================== MOMENTS GALLERY ===================== */
+  .moments{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.8rem; }
+  .moment-card{
+    background:var(--card); border-radius:16px; overflow:hidden;
+    border:1px solid rgba(0,191,255,.12); transition:transform .5s var(--ease), box-shadow .5s var(--ease);
+    transform-style:preserve-3d;
+  }
+  .moment-card:hover{ transform:translateY(-8px) rotateZ(-.6deg) scale(1.015); box-shadow:0 30px 70px rgba(0,191,255,.18); }
+  .moment-thumb{ position:relative; aspect-ratio:16/9; overflow:hidden; }
+  .moment-thumb img{ width:100%; height:100%; object-fit:cover; transition:transform .6s var(--ease); }
+  .moment-card:hover .moment-thumb img{ transform:scale(1.08); }
+  .play-btn{
+    position:absolute; inset:0; margin:auto; width:64px; height:64px; border-radius:50%;
+    background:rgba(0,191,255,.9); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:transform .35s var(--ease), background .35s var(--ease);
+    box-shadow:0 0 0 0 rgba(0,191,255,.5); animation:pulse 2.4s infinite;
+  }
+  .play-btn:hover{ transform:scale(1.12); background:var(--accent); }
+  .play-btn::after{ content:""; border-style:solid; border-width:11px 0 11px 18px; border-color:transparent transparent transparent var(--primary); margin-left:4px; }
+  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(0,191,255,.45);} 70%{box-shadow:0 0 0 18px rgba(0,191,255,0);} 100%{box-shadow:0 0 0 0 rgba(0,191,255,0);} }
+  .moment-body{ padding:1.4rem; }
+  .moment-body .yr{ color:var(--accent); font-weight:700; font-size:.78rem; letter-spacing:.12em; }
+  .moment-body h3{ font-size:1.2rem; margin:.25rem 0 .5rem; }
+  .moment-body p{ font-size:.9rem; }
+
+  /* ===================== STATS COMPARISON ===================== */
+  .stat-block{ background:var(--card); border:1px solid rgba(0,191,255,.12); border-radius:16px; padding:2rem; transform-style:preserve-3d; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  @media(max-width:780px){ .stat-grid{ grid-template-columns:1fr; } }
+  .bar{ margin:.9rem 0; }
+  .bar .bar-label{ display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:.3rem; }
+  .bar .bar-label b{ color:var(--accent); font-family:var(--serif); }
+  .bar .track{ height:14px; background:rgba(255,255,255,.06); border-radius:8px; overflow:hidden; }
+  .bar .fill{ height:100%; width:0; border-radius:8px; background:linear-gradient(90deg, var(--tertiary), var(--accent)); transition:width 1.4s var(--ease); box-shadow:0 0 14px rgba(0,191,255,.4); }
+  .float-nums{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1.4rem; text-align:center; margin-top:1rem; }
+  .float-num{ transform-style:preserve-3d; }
+  .float-num b{ font-family:var(--serif); font-size:clamp(2.2rem,5vw,3.4rem); color:var(--accent); display:block; text-shadow:0 14px 30px rgba(0,191,255,.25); }
+  .float-num span{ font-size:.8rem; color:var(--text-soft); text-transform:uppercase; letter-spacing:.08em; }
+
+  /* ===================== TIMELINE ===================== */
+  .timeline{ position:relative; max-width:980px; margin:0 auto; }
+  .timeline::before{ content:""; position:absolute; left:50%; top:0; bottom:0; width:2px; background:linear-gradient(180deg, transparent, var(--accent), transparent); transform:translateX(-50%); }
+  .era{ position:relative; width:50%; padding:1.5rem 2.4rem; }
+  .era:nth-child(odd){ left:0; text-align:right; }
+  .era:nth-child(even){ left:50%; }
+  .era::before{ content:""; position:absolute; top:1.8rem; width:16px; height:16px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 5px rgba(0,191,255,.2); }
+  .era:nth-child(odd)::before{ right:-8px; }
+  .era:nth-child(even)::before{ left:-8px; }
+  .era-card{ background:var(--card); border:1px solid rgba(0,191,255,.14); border-radius:14px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.4); }
+  .era-card img{ width:100%; height:160px; object-fit:cover; }
+  .era-card .ec-body{ padding:1.2rem; text-align:left; }
+  .era-card .yr{ color:var(--accent); font-weight:700; font-size:.78rem; letter-spacing:.12em; }
+  .era-card h3{ font-size:1.25rem; margin:.2rem 0 .5rem; }
+  .era-card p{ font-size:.86rem; }
+  @media(max-width:780px){
+    .timeline::before{ left:8px; }
+    .era,.era:nth-child(even){ width:100%; left:0; text-align:left; padding-left:2.4rem; padding-right:.5rem; }
+    .era:nth-child(odd){ text-align:left; }
+    .era::before,.era:nth-child(odd)::before,.era:nth-child(even)::before{ left:0; right:auto; }
+  }
+
+  /* ===================== IMMERSIVE GALLERY (masonry) ===================== */
+  .masonry{ columns:3 260px; column-gap:1.2rem; }
+  .masonry figure{ break-inside:avoid; margin:0 0 1.2rem; border-radius:14px; overflow:hidden; position:relative; border:1px solid rgba(0,191,255,.1); }
+  .masonry img{ width:100%; display:block; transition:transform .7s var(--ease), filter .5s var(--ease); filter:saturate(1.05) brightness(.92); }
+  .masonry figure:hover img{ transform:scale(1.07); filter:saturate(1.2) brightness(1.05); }
+  .masonry figcaption{ position:absolute; left:0; right:0; bottom:0; padding:1rem .9rem .8rem; font-size:.82rem; color:#fff; background:linear-gradient(180deg, transparent, rgba(10,14,39,.9)); opacity:0; transform:translateY(10px); transition:.4s var(--ease); }
+  .masonry figure:hover figcaption{ opacity:1; transform:translateY(0); }
+
+  /* ===================== FOOTER ===================== */
+  footer{ text-align:center; padding:5rem 1.5rem 3rem; background:linear-gradient(180deg, transparent, rgba(0,0,0,.4)); }
+  footer .quote{ font-family:var(--serif); font-style:italic; font-size:clamp(1.3rem,3.5vw,2rem); max-width:760px; margin:0 auto 1rem; color:#fff; }
+  footer .quote-by{ color:var(--accent); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:.8rem; }
+  .foot-nav{ display:flex; flex-wrap:wrap; gap:1.4rem; justify-content:center; margin:2rem 0 1.5rem; }
+  .foot-nav a{ color:var(--text-soft); font-size:.85rem; text-transform:uppercase; letter-spacing:.08em; }
+  .foot-nav a:hover{ color:var(--accent); }
+  footer small{ color:var(--text-soft); display:block; margin-top:1rem; opacity:.7; }
+
+  /* ===================== MODAL ===================== */
+  .modal{ position:fixed; inset:0; z-index:200; display:none; align-items:center; justify-content:center; padding:1.5rem; background:rgba(5,8,20,.85); backdrop-filter:blur(6px); }
+  .modal.open{ display:flex; }
+  .modal-box{ width:min(900px,100%); }
+  .modal .video{ margin:0; }
+  .modal-close{ position:absolute; top:1.2rem; right:1.5rem; width:44px; height:44px; border-radius:50%; border:1px solid rgba(0,191,255,.4); background:var(--card); color:#fff; font-size:1.5rem; cursor:pointer; }
+  .modal-close:hover{ background:var(--accent); color:var(--primary); }
+
+  /* image-failure fallback styling */
+  img.broken{ background:linear-gradient(135deg, var(--secondary), var(--tertiary)); }
+</style>
+</head>
+
+<body>
+<div class="stage">
+
+  <!-- ===================== NAV ===================== -->
+  <nav id="nav">
+    <div class="brand">BASKETBALL <b>LEGENDS</b></div>
+    <div class="nav-links">
+      <a href="#teams">Teams</a>
+      <a href="#players">Players</a>
+      <a href="#moments">Moments</a>
+      <a href="#stats">Stats</a>
+      <a href="#timeline">Eras</a>
+      <a href="#gallery">Gallery</a>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero" id="top">
+    <!-- HERO BG: Unsplash basketball arena -->
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-inner">
+      <span class="eyebrow">The NBA Cinematic Archive</span>
+      <h1>BASKETBALL<br />LEGENDS</h1>
+      <p class="tag">Where History Lives. Where Legends Rise.</p>
+      <p class="sub">A three-dimensional editorial journey through the dynasties, the icons and the immortal moments that built the game.</p>
+    </div>
+    <div class="scroll-ind">
+      <span>Scroll to descend</span>
+      <div class="mouse"></div>
+    </div>
+  </header>
+
+  <!-- ===================== TEAMS ===================== -->
+  <section id="teams">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Franchises &amp; Dynasties</span>
+        <h2>Historic &amp; Contemporary Teams</h2>
+        <p>Five franchises that defined eras — rendered in depth as you descend through their legacies.</p>
+      </div>
+
+      <div class="teams">
+
+        <!-- LAKERS -->
+        <article class="team reveal rx">
+          <div class="team-media">
+            <div class="accent-bar" style="background:linear-gradient(90deg,#552583,#FDB927)"></div>
+            <div class="team-shots">
+              <!-- LeBron James (Wikimedia) -->
+              <img loading="lazy" alt="LeBron James of the Los Angeles Lakers" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/LeBron_James_%2851960276445%29_%28cropped2%29.jpg/640px-LeBron_James_%2851960276445%29_%28cropped2%29.jpg" />
+              <!-- Magic Johnson -->
+              <img loading="lazy" alt="Magic Johnson, Lakers Showtime era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Magic_Johnson.jpg/640px-Magic_Johnson.jpg" />
+              <!-- Kareem Abdul-Jabbar -->
+              <img loading="lazy" alt="Kareem Abdul-Jabbar skyhook era Lakers" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Kareem_Abdul-Jabbar_in_2018.jpg/640px-Kareem_Abdul-Jabbar_in_2018.jpg" />
+              <!-- Lakers arena / action -->
+              <img loading="lazy" alt="Lakers game action at the arena" src="https://images.unsplash.com/photo-1518614368389-5f97ff5d7d3f?auto=format&fit=crop&w=640&q=70" />
+            </div>
+          </div>
+          <div class="team-body">
+            <span class="team-era">Showtime 1980s · LeBron Era 2018–</span>
+            <h3>Los Angeles Lakers</h3>
+            <p>From Magic's no-look brilliance under the Showtime lights to LeBron's bubble title — purple and gold is the color of championship gravity.</p>
+            <div class="stats-row">
+              <div class="stat"><b>17</b><span>Championships</span></div>
+              <div class="stat"><b>32</b><span>Finals Apps</span></div>
+              <div class="stat"><b>.595</b><span>All-Time Win %</span></div>
+            </div>
+            <div class="titles">
+              <span class="pill">1980 · 82 · 85 · 87 · 88</span>
+              <span class="pill">2000 · 01 · 02</span>
+              <span class="pill">2009 · 10 · 2020</span>
+            </div>
+            <div class="video">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/2KMJFKzHcXM" title="Lakers championship highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+        </article>
+
+        <!-- WARRIORS -->
+        <article class="team reveal rx">
+          <div class="team-media">
+            <div class="accent-bar" style="background:linear-gradient(90deg,#1D428A,#FFC72C)"></div>
+            <div class="team-shots">
+              <!-- Stephen Curry -->
+              <img loading="lazy" alt="Stephen Curry of the Golden State Warriors" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Stephen_Curry_Shooting_%28cropped%29.jpg/640px-Stephen_Curry_Shooting_%28cropped%29.jpg" />
+              <!-- Klay Thompson -->
+              <img loading="lazy" alt="Klay Thompson, Splash Brother" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Klay_Thompson_2016_%28cropped%29.jpg/640px-Klay_Thompson_2016_%28cropped%29.jpg" />
+              <!-- Draymond Green -->
+              <img loading="lazy" alt="Draymond Green, Warriors defensive anchor" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Draymond_Green_%2851907873831%29_%28cropped%29.jpg/640px-Draymond_Green_%2851907873831%29_%28cropped%29.jpg" />
+              <!-- arena -->
+              <img loading="lazy" alt="Basketball arena lights" src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=640&q=70" />
+            </div>
+          </div>
+          <div class="team-body">
+            <span class="team-era">Dynasty 2014–2022</span>
+            <h3>Golden State Warriors</h3>
+            <p>The Splash Brothers rewrote geometry. A 73-win season, a revolution from beyond the arc, and four titles in eight years.</p>
+            <div class="stats-row">
+              <div class="stat"><b>7</b><span>Championships</span></div>
+              <div class="stat"><b>73</b><span>2016 Wins (Record)</span></div>
+              <div class="stat"><b>4</b><span>Titles since 2015</span></div>
+            </div>
+            <div class="titles">
+              <span class="pill">1947 · 1956 · 1975</span>
+              <span class="pill">2015 · 2017 · 2018 · 2022</span>
+            </div>
+            <div class="video">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/JjQVghVcF98" title="Warriors dynasty highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+        </article>
+
+        <!-- BULLS -->
+        <article class="team reveal rx">
+          <div class="team-media">
+            <div class="accent-bar" style="background:linear-gradient(90deg,#CE1141,#000000)"></div>
+            <div class="team-shots">
+              <!-- Michael Jordan -->
+              <img loading="lazy" alt="Michael Jordan of the Chicago Bulls" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Michael_Jordan_in_2014.jpg/640px-Michael_Jordan_in_2014.jpg" />
+              <!-- Scottie Pippen -->
+              <img loading="lazy" alt="Scottie Pippen, Chicago Bulls" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Scottie_Pippen_2017.jpg/640px-Scottie_Pippen_2017.jpg" />
+              <!-- Dennis Rodman -->
+              <img loading="lazy" alt="Dennis Rodman, Bulls rebounding force" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Dennis_Rodman_2019.jpg/640px-Dennis_Rodman_2019.jpg" />
+              <!-- court -->
+              <img loading="lazy" alt="Hardwood basketball court" src="https://images.unsplash.com/photo-1505666287802-931dc83948e9?auto=format&fit=crop&w=640&q=70" />
+            </div>
+          </div>
+          <div class="team-body">
+            <span class="team-era">The Jordan Era 1991–1998</span>
+            <h3>Chicago Bulls</h3>
+            <p>Two three-peats. Air Jordan, Pippen and Rodman turned the United Center into the center of the basketball universe.</p>
+            <div class="stats-row">
+              <div class="stat"><b>6</b><span>Championships</span></div>
+              <div class="stat"><b>72</b><span>1996 Wins</span></div>
+              <div class="stat"><b>6-0</b><span>NBA Finals Record</span></div>
+            </div>
+            <div class="titles">
+              <span class="pill">1991 · 1992 · 1993</span>
+              <span class="pill">1996 · 1997 · 1998</span>
+            </div>
+            <div class="video">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/PYydteBkhsg" title="Chicago Bulls 1998 Finals" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+        </article>
+
+        <!-- SPURS -->
+        <article class="team reveal rx">
+          <div class="team-media">
+            <div class="accent-bar" style="background:linear-gradient(90deg,#C4CED4,#000000)"></div>
+            <div class="team-shots">
+              <!-- Tim Duncan -->
+              <img loading="lazy" alt="Tim Duncan of the San Antonio Spurs" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Tim_Duncan_%28cropped%29.jpg/640px-Tim_Duncan_%28cropped%29.jpg" />
+              <!-- Victor Wembanyama -->
+              <img loading="lazy" alt="Victor Wembanyama, San Antonio Spurs rookie sensation" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Victor_Wembanyama_2022_%28cropped%29.jpg/640px-Victor_Wembanyama_2022_%28cropped%29.jpg" />
+              <!-- Manu Ginobili -->
+              <img loading="lazy" alt="Manu Ginobili, Spurs guard" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Manu_Ginobili_2015.jpg/640px-Manu_Ginobili_2015.jpg" />
+              <!-- hoop -->
+              <img loading="lazy" alt="Basketball hoop at dusk" src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?auto=format&fit=crop&w=640&q=70" />
+            </div>
+          </div>
+          <div class="team-body">
+            <span class="team-era">Duncan Dynasty 1999–2014 · Wembanyama Era 2023–</span>
+            <h3>San Antonio Spurs</h3>
+            <p>The model franchise. Tim Duncan's quiet dominance built five titles; now Victor Wembanyama carries a new era into orbit.</p>
+            <div class="stats-row">
+              <div class="stat"><b>5</b><span>Championships</span></div>
+              <div class="stat"><b>22</b><span>Straight 50-Win Seasons</span></div>
+              <div class="stat"><b>1</b><span>Generational Talent</span></div>
+            </div>
+            <div class="titles">
+              <span class="pill">1999 · 2003 · 2005</span>
+              <span class="pill">2007 · 2014</span>
+            </div>
+            <div class="video">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/pelLnTd0Olw" title="San Antonio Spurs highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+        </article>
+
+        <!-- KNICKS -->
+        <article class="team reveal rx">
+          <div class="team-media">
+            <div class="accent-bar" style="background:linear-gradient(90deg,#006BB6,#F58426)"></div>
+            <div class="team-shots">
+              <!-- Jalen Brunson -->
+              <img loading="lazy" alt="Jalen Brunson of the New York Knicks" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Jalen_Brunson_%2851959319402%29_%28cropped%29.jpg/640px-Jalen_Brunson_%2851959319402%29_%28cropped%29.jpg" />
+              <!-- Patrick Ewing -->
+              <img loading="lazy" alt="Patrick Ewing, Knicks legend" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Patrick_Ewing_2013.jpg/640px-Patrick_Ewing_2013.jpg" />
+              <!-- MSG -->
+              <img loading="lazy" alt="Madison Square Garden exterior, New York" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Madison_Square_Garden_%28MSG%29_-_Full_%2848124330357%29.jpg/640px-Madison_Square_Garden_%28MSG%29_-_Full_%2848124330357%29.jpg" />
+              <!-- crowd -->
+              <img loading="lazy" alt="Basketball crowd under arena lights" src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?auto=format&fit=crop&w=640&q=70" />
+            </div>
+          </div>
+          <div class="team-body">
+            <span class="team-era">MSG Legacy · Brunson Era 2022–</span>
+            <h3>New York Knicks</h3>
+            <p>The Mecca of basketball. From the 1970 title teams and Ewing's roar to Jalen Brunson reviving the world's most famous arena.</p>
+            <div class="stats-row">
+              <div class="stat"><b>2</b><span>Championships</span></div>
+              <div class="stat"><b>1970</b><span>First Title</span></div>
+              <div class="stat"><b>MSG</b><span>The Mecca</span></div>
+            </div>
+            <div class="titles">
+              <span class="pill">1970 · 1973</span>
+              <span class="pill">8× Conference Finals</span>
+            </div>
+            <div class="video">
+              <iframe loading="lazy" src="https://www.youtube.com/embed/9pVd8_bjl1o" title="New York Knicks playoff highlights" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PLAYERS ===================== -->
+  <section id="players">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">The Immortals</span>
+        <h2>Legendary &amp; Contemporary Players</h2>
+        <p>Hover (or tap) any card to flip it — stats, iconic moments and a few words on what made them eternal.</p>
+      </div>
+
+      <div class="players-grid" id="playersGrid">
+        <!-- cards injected by JS for maintainability -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MOMENTS ===================== -->
+  <section id="moments">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Frozen in Time</span>
+        <h2>Iconic Moments</h2>
+        <p>Click any play button to watch the moment that changed everything.</p>
+      </div>
+      <div class="moments" id="momentsGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== STATS ===================== -->
+  <section id="stats">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">By The Numbers</span>
+        <h2>The Record Books</h2>
+        <p>Bars and figures rise with depth as they enter the frame.</p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-block reveal rx">
+          <h3>All-Time Leading Scorers</h3>
+          <div class="bar"><div class="bar-label"><span>LeBron James</span><b data-count="42184">0</b></div><div class="track"><div class="fill" data-w="100"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Kareem Abdul-Jabbar</span><b data-count="38387">0</b></div><div class="track"><div class="fill" data-w="91"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Karl Malone</span><b data-count="36928">0</b></div><div class="track"><div class="fill" data-w="87.5"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Kobe Bryant</span><b data-count="33643">0</b></div><div class="track"><div class="fill" data-w="79.7"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Michael Jordan</span><b data-count="32292">0</b></div><div class="track"><div class="fill" data-w="76.5"></div></div></div>
+        </div>
+
+        <div class="stat-block reveal rx">
+          <h3>Most Championships (Players)</h3>
+          <div class="bar"><div class="bar-label"><span>Bill Russell</span><b data-count="11">0</b></div><div class="track"><div class="fill" data-w="100"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Sam Jones</span><b data-count="10">0</b></div><div class="track"><div class="fill" data-w="91"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Kareem / Magic-era core</span><b data-count="6">0</b></div><div class="track"><div class="fill" data-w="55"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Michael Jordan</span><b data-count="6">0</b></div><div class="track"><div class="fill" data-w="55"></div></div></div>
+          <div class="bar"><div class="bar-label"><span>Tim Duncan</span><b data-count="5">0</b></div><div class="track"><div class="fill" data-w="45"></div></div></div>
+        </div>
+      </div>
+
+      <div class="stat-block reveal" style="margin-top:2rem;">
+        <h3 style="text-align:center; margin-bottom:1rem;">The Headline Numbers</h3>
+        <div class="float-nums">
+          <div class="float-num"><b data-count="100">0</b><span>Wilt's Single-Game Points</span></div>
+          <div class="float-num"><b data-count="81">0</b><span>Kobe vs Toronto</span></div>
+          <div class="float-num"><b data-count="73">0</b><span>Warriors 2016 Wins</span></div>
+          <div class="float-num"><b data-count="6">0</b><span>Jordan Finals MVPs</span></div>
+          <div class="float-num"><b data-count="5">0</b><span>Most MVP Awards (Kareem)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TIMELINE ===================== -->
+  <section id="timeline">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Decade by Decade</span>
+        <h2>Timeline of Eras</h2>
+        <p>Each era emerges with depth as you scroll the spine of NBA history.</p>
+      </div>
+
+      <div class="timeline">
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="Showtime Lakers era, Magic Johnson" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Magic_Johnson.jpg/640px-Magic_Johnson.jpg" />
+            <div class="ec-body"><span class="yr">1980s</span><h3>The Showtime Era</h3><p>Magic's Lakers and Bird's Celtics waged the rivalry that saved the league. Fast breaks, no-look passes, prime-time basketball.</p></div>
+          </div>
+        </div>
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="Michael Jordan, the Jordan era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Michael_Jordan_in_2014.jpg/640px-Michael_Jordan_in_2014.jpg" />
+            <div class="ec-body"><span class="yr">1990s</span><h3>The Jordan Era</h3><p>Two Bulls three-peats and global superstardom. Air Jordan made basketball the world's game.</p></div>
+          </div>
+        </div>
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="Kobe Bryant, Kobe and Shaq era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Kobe_Bryant_8.jpg/640px-Kobe_Bryant_8.jpg" />
+            <div class="ec-body"><span class="yr">2000s</span><h3>Kobe &amp; Shaq · Spurs Dynasty</h3><p>A three-peat in LA, the relentless Spurs, and the Mamba Mentality taking root.</p></div>
+          </div>
+        </div>
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="LeBron James, LeBron dynasty era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/LeBron_James_%2851960276445%29_%28cropped2%29.jpg/640px-LeBron_James_%2851960276445%29_%28cropped2%29.jpg" />
+            <div class="ec-body"><span class="yr">2010s</span><h3>The LeBron Decade</h3><p>Eight straight Finals, the Decision, the comeback — King James bent the era to his will.</p></div>
+          </div>
+        </div>
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="Stephen Curry, Splash Brothers era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Stephen_Curry_Shooting_%28cropped%29.jpg/640px-Stephen_Curry_Shooting_%28cropped%29.jpg" />
+            <div class="ec-body"><span class="yr">2015–2022</span><h3>The Splash Revolution</h3><p>Golden State weaponized the three-point line. Curry changed how the game is played at every level.</p></div>
+          </div>
+        </div>
+        <div class="era reveal">
+          <div class="era-card">
+            <img loading="lazy" alt="Victor Wembanyama, modern era" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Victor_Wembanyama_2022_%28cropped%29.jpg/640px-Victor_Wembanyama_2022_%28cropped%29.jpg" />
+            <div class="ec-body"><span class="yr">2020s</span><h3>The Modern Era</h3><p>Wembanyama, LaMelo, Tatum and SGA usher in a positionless, global, sky-high new chapter.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GALLERY ===================== -->
+  <section id="gallery">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">Immersive Gallery</span>
+        <h2>The Visual Archive</h2>
+        <p>Action, portraits and arena light — hover to bring each frame forward.</p>
+      </div>
+
+      <div class="masonry reveal">
+        <figure><img loading="lazy" alt="Player driving to the basket" src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=600&q=75" /><figcaption>Game Night · Drive to the rim</figcaption></figure>
+        <figure><img loading="lazy" alt="Basketball through the hoop" src="https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=600&q=75" /><figcaption>Nothing but net</figcaption></figure>
+        <figure><img loading="lazy" alt="Outdoor court at golden hour" src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=600&q=75" /><figcaption>Where it begins · The playground</figcaption></figure>
+        <figure><img loading="lazy" alt="Slam dunk silhouette" src="https://images.unsplash.com/photo-1577471488278-16eec37ffcc2?auto=format&fit=crop&w=600&q=75" /><figcaption>Above the rim</figcaption></figure>
+        <figure><img loading="lazy" alt="Basketball resting on court" src="https://images.unsplash.com/photo-1505666287802-931dc83948e9?auto=format&fit=crop&w=600&q=75" /><figcaption>The hardwood</figcaption></figure>
+        <figure><img loading="lazy" alt="Arena lights before tip-off" src="https://images.unsplash.com/photo-1518614368389-5f97ff5d7d3f?auto=format&fit=crop&w=600&q=75" /><figcaption>Before tip-off</figcaption></figure>
+        <figure><img loading="lazy" alt="Hoop against the sky" src="https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?auto=format&fit=crop&w=600&q=75" /><figcaption>City game</figcaption></figure>
+        <figure><img loading="lazy" alt="Player handling the ball" src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=600&q=75" /><figcaption>Handles</figcaption></figure>
+        <figure><img loading="lazy" alt="Championship celebration confetti" src="https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=600&q=75" /><figcaption>Champions</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <p class="quote">"I've failed over and over and over again in my life. And that is why I succeed."</p>
+    <p class="quote-by">— Michael Jordan</p>
+    <nav class="foot-nav">
+      <a href="#top">Top</a>
+      <a href="#teams">Teams</a>
+      <a href="#players">Players</a>
+      <a href="#moments">Moments</a>
+      <a href="#stats">Stats</a>
+      <a href="#timeline">Eras</a>
+      <a href="#gallery">Gallery</a>
+    </nav>
+    <small>Basketball Legends 3D · An editorial tribute · Built 2026 · Imagery via Wikimedia Commons &amp; Unsplash · Video via YouTube</small>
+  </footer>
+
+</div><!-- /stage -->
+
+<!-- ===================== VIDEO MODAL ===================== -->
+<div class="modal" id="modal" aria-hidden="true">
+  <button class="modal-close" id="modalClose" aria-label="Close video">&times;</button>
+  <div class="modal-box">
+    <div class="video"><iframe id="modalFrame" src="" title="Iconic moment video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   DATA
+   ========================================================================== */
+const SVG_FALLBACK = (label) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">
+     <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+       <stop offset="0" stop-color="#1a3a52"/><stop offset="1" stop-color="#0a0e27"/>
+     </linearGradient></defs>
+     <rect width="400" height="500" fill="url(#g)"/>
+     <circle cx="200" cy="200" r="70" fill="none" stroke="#00bfff" stroke-width="4" opacity="0.6"/>
+     <text x="200" y="300" fill="#00bfff" font-family="Georgia,serif" font-size="22" font-weight="bold" text-anchor="middle">${label}</text>
+   </svg>`);
+
+const PLAYERS = [
+  { group:"Classic Legends" },
+  { name:"Michael Jordan", num:"23", team:"Chicago Bulls", years:"1984–2003",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Michael_Jordan_in_2014.jpg/480px-Michael_Jordan_in_2014.jpg",
+    stats:[["PPG","30.1 (all-time best)"],["Titles","6"],["MVP","5"],["All-Star","14×"]],
+    moment:"\"The Last Shot\" — 1998 Finals dagger over Russell.",
+    video:"https://www.youtube.com/embed/PYydteBkhsg",
+    lyric:"Gravity was a suggestion. The standard against which all greatness is still measured." },
+  { name:"Magic Johnson", num:"32", team:"LA Lakers", years:"1979–1996",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Magic_Johnson.jpg/480px-Magic_Johnson.jpg",
+    stats:[["APG","11.2"],["Titles","5"],["MVP","3"],["All-Star","12×"]],
+    moment:"Rookie, Game 6, plays center — 42 points for the title.",
+    video:"https://www.youtube.com/embed/2KMJFKzHcXM",
+    lyric:"Joy as a playing style. He made the no-look pass an art form." },
+  { name:"Larry Bird", num:"33", team:"Boston Celtics", years:"1979–1992",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Larry_Bird_1985.jpg/480px-Larry_Bird_1985.jpg",
+    stats:[["PPG","24.3"],["Titles","3"],["MVP","3"],["All-Star","12×"]],
+    moment:"\"I'm the No. 2 guy\" — the trash-talking, clutch Hick from French Lick.",
+    video:"https://www.youtube.com/embed/9pVd8_bjl1o",
+    lyric:"Cold confidence and a jumper that never doubted itself." },
+  { name:"Kareem Abdul-Jabbar", num:"33", team:"Lakers / Bucks", years:"1969–1989",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Kareem_Abdul-Jabbar_in_2018.jpg/480px-Kareem_Abdul-Jabbar_in_2018.jpg",
+    stats:[["Points","38,387"],["Titles","6"],["MVP","6 (record)"],["All-Star","19×"]],
+    moment:"The unstoppable skyhook — basketball's most reliable weapon.",
+    video:"https://www.youtube.com/embed/2KMJFKzHcXM",
+    lyric:"Two decades of dominance distilled into one perfect arc." },
+  { name:"Wilt Chamberlain", num:"13", team:"Warriors / Lakers", years:"1959–1973",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Wilt_Chamberlain_1959.jpeg/480px-Wilt_Chamberlain_1959.jpeg",
+    stats:[["High Game","100 pts"],["RPG (season)","27.2"],["Titles","2"],["MVP","4"]],
+    moment:"100 points in a single night — March 2, 1962.",
+    video:"https://www.youtube.com/embed/pelLnTd0Olw",
+    lyric:"The man whose numbers forced the rulebook to be rewritten." },
+
+  { group:"Modern Superstars" },
+  { name:"LeBron James", num:"23 / 6", team:"Cavs · Heat · Lakers", years:"2003–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/LeBron_James_%2851960276445%29_%28cropped2%29.jpg/480px-LeBron_James_%2851960276445%29_%28cropped2%29.jpg",
+    stats:[["Points","42,000+ (all-time)"],["Titles","4"],["MVP","4"],["All-Star","20×"]],
+    moment:"\"The Block\" — chasedown on Iguodala, 2016 Finals Game 7.",
+    video:"https://www.youtube.com/embed/JjQVghVcF98",
+    lyric:"Longevity as legend. The scoring king who never stopped evolving." },
+  { name:"Kobe Bryant", num:"24 / 8", team:"LA Lakers", years:"1996–2016",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Kobe_Bryant_8.jpg/480px-Kobe_Bryant_8.jpg",
+    stats:[["PPG","25.0"],["Titles","5"],["MVP","1"],["All-Star","18×"]],
+    moment:"81 points vs Toronto, 2006 — then 60 in his final game.",
+    video:"https://www.youtube.com/embed/2KMJFKzHcXM",
+    lyric:"Mamba Mentality — obsession sharpened into immortality." },
+  { name:"Stephen Curry", num:"30", team:"Golden State", years:"2009–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Stephen_Curry_Shooting_%28cropped%29.jpg/480px-Stephen_Curry_Shooting_%28cropped%29.jpg",
+    stats:[["3PM","All-time leader"],["Titles","4"],["MVP","2 (1 unanimous)"],["All-Star","10×"]],
+    moment:"The 2016 unanimous MVP — and the night he hit 13 threes.",
+    video:"https://www.youtube.com/embed/JjQVghVcF98",
+    lyric:"He moved the three-point line into the soul of the game." },
+  { name:"Luka Dončić", num:"77", team:"Mavericks · Lakers", years:"2018–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Luka_Don%C4%8Di%C4%87_2021_%28cropped%29.jpg/480px-Luka_Don%C4%8Di%C4%87_2021_%28cropped%29.jpg",
+    stats:[["PPG","28+"],["Triple-Dbls","Elite"],["All-NBA","5×"],["All-Star","5×"]],
+    moment:"Step-back buzzer-beater over the Clippers, 2020 bubble.",
+    video:"https://www.youtube.com/embed/pelLnTd0Olw",
+    lyric:"A maestro of pace — old-soul genius in a young body." },
+  { name:"Kevin Durant", num:"35", team:"OKC · GSW · Nets · Suns", years:"2007–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Kevin_Durant_2019.jpg/480px-Kevin_Durant_2019.jpg",
+    stats:[["PPG","27+"],["Titles","2"],["MVP","1"],["Finals MVP","2×"]],
+    moment:"Back-to-back Finals MVPs with Golden State, 2017–18.",
+    video:"https://www.youtube.com/embed/JjQVghVcF98",
+    lyric:"Seven feet of pure, unguardable rhythm. The Slim Reaper." },
+
+  { group:"Rising Stars · Current Generation" },
+  { name:"Victor Wembanyama", num:"1", team:"San Antonio Spurs", years:"2023–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Victor_Wembanyama_2022_%28cropped%29.jpg/480px-Victor_Wembanyama_2022_%28cropped%29.jpg",
+    stats:[["Height","7'4\""],["ROY","2024"],["Blocks","Generational"],["All-Star","Rising"]],
+    moment:"5×5 games as a rookie — an alien skillset, per LeBron.",
+    video:"https://www.youtube.com/embed/pelLnTd0Olw",
+    lyric:"A guard's touch in a skyscraper's frame. Basketball's future, arrived." },
+  { name:"LaMelo Ball", num:"1", team:"Charlotte Hornets", years:"2020–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/LaMelo_Ball_%28cropped%29.jpg/480px-LaMelo_Ball_%28cropped%29.jpg",
+    stats:[["ROY","2021"],["APG","8+"],["All-Star","1×"],["Range","Limitless"]],
+    moment:"Full circle — from teenage phenom to Rookie of the Year.",
+    video:"https://www.youtube.com/embed/9pVd8_bjl1o",
+    lyric:"Flash and flair with court vision from another dimension." },
+  { name:"Jayson Tatum", num:"0", team:"Boston Celtics", years:"2017–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Jayson_Tatum_%2851959319402%29_%28cropped%29.jpg/480px-Jayson_Tatum_%2851959319402%29_%28cropped%29.jpg",
+    stats:[["PPG","27+"],["Titles","1 (2024)"],["All-Star","5×"],["All-NBA","3×"]],
+    moment:"Banner 18 — leading Boston to the 2024 championship.",
+    video:"https://www.youtube.com/embed/9pVd8_bjl1o",
+    lyric:"Smooth, two-way, relentless. The face of the new Celtics." },
+  { name:"Shai Gilgeous-Alexander", num:"2", team:"Oklahoma City", years:"2018–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Shai_Gilgeous-Alexander_%28cropped%29.jpg/480px-Shai_Gilgeous-Alexander_%28cropped%29.jpg",
+    stats:[["PPG","30+"],["MVP","2025"],["All-Star","3×"],["All-NBA","2×"]],
+    moment:"Mid-range mastery powering OKC's championship rise.",
+    video:"https://www.youtube.com/embed/JjQVghVcF98",
+    lyric:"Deceptive calm, devastating control. The quiet assassin." },
+  { name:"Paolo Banchero", num:"5", team:"Orlando Magic", years:"2022–present",
+    img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Paolo_Banchero_%28cropped%29.jpg/480px-Paolo_Banchero_%28cropped%29.jpg",
+    stats:[["ROY","2023"],["PPG","22+"],["All-Star","1×"],["Frame","6'10\""]],
+    moment:"Reviving Orlando as a cornerstone scorer and leader.",
+    video:"https://www.youtube.com/embed/pelLnTd0Olw",
+    lyric:"Power and poise — a modern forward built for the next decade." }
+];
+
+const MOMENTS = [
+  { yr:"1998", title:"The Last Shot", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Michael_Jordan_in_2014.jpg/640px-Michael_Jordan_in_2014.jpg",
+    desc:"Jordan's crossover and jumper over Bryon Russell to win his sixth title — the perfect ending.", video:"https://www.youtube.com/embed/PYydteBkhsg" },
+  { yr:"2006 · 2016", title:"Kobe's 81 & The Final 60", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Kobe_Bryant_8.jpg/640px-Kobe_Bryant_8.jpg",
+    desc:"81 points against Toronto, then a 60-point farewell — bookends of the Mamba's genius.", video:"https://www.youtube.com/embed/2KMJFKzHcXM" },
+  { yr:"2016", title:"The Block", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/LeBron_James_%2851960276445%29_%28cropped2%29.jpg/640px-LeBron_James_%2851960276445%29_%28cropped2%29.jpg",
+    desc:"LeBron's chasedown on Iguodala in Game 7 sealed Cleveland's first title — and erased a 3-1 deficit.", video:"https://www.youtube.com/embed/JjQVghVcF98" },
+  { yr:"2013–", title:"Curry's Range", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Stephen_Curry_Shooting_%28cropped%29.jpg/640px-Stephen_Curry_Shooting_%28cropped%29.jpg",
+    desc:"From half-court pull-ups to record-shattering three-point seasons — Curry redefined shooting range.", video:"https://www.youtube.com/embed/JjQVghVcF98" },
+  { yr:"2023–", title:"Wembanyama Rising", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Victor_Wembanyama_2022_%28cropped%29.jpg/640px-Victor_Wembanyama_2022_%28cropped%29.jpg",
+    desc:"Blocks, threes and dunks from a 7'4\" frame — a rookie season that felt like science fiction.", video:"https://www.youtube.com/embed/pelLnTd0Olw" },
+  { yr:"2020–", title:"LaMelo: Full Circle", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/LaMelo_Ball_%28cropped%29.jpg/640px-LaMelo_Ball_%28cropped%29.jpg",
+    desc:"From global teenage prospect to NBA Rookie of the Year — flair that lights up Charlotte.", video:"https://www.youtube.com/embed/9pVd8_bjl1o" }
+];
+
+/* ============================================================================
+   IMAGE FALLBACK
+   ========================================================================== */
+function attachFallback(img, label){
+  img.addEventListener('error', function handle(){
+    img.removeEventListener('error', handle);
+    img.classList.add('broken');
+    img.src = SVG_FALLBACK(label || 'NBA');
+  });
+}
+// attach to all existing imgs
+document.querySelectorAll('img').forEach(img => attachFallback(img, (img.alt||'').split(',')[0]));
+
+/* ============================================================================
+   RENDER PLAYERS
+   ========================================================================== */
+const pg = document.getElementById('playersGrid');
+PLAYERS.forEach(p => {
+  if(p.group){
+    const h = document.createElement('div');
+    h.className = 'group-label reveal';
+    h.textContent = p.group;
+    pg.appendChild(h);
+    return;
+  }
+  const card = document.createElement('div');
+  card.className = 'pcard reveal ry';
+  card.tabIndex = 0;
+  card.innerHTML = `
+    <div class="pcard-inner">
+      <div class="pface pfront">
+        <span class="num">${p.num}</span>
+        <img loading="lazy" alt="${p.name}, ${p.team}" src="${p.img}">
+        <div class="grad"></div>
+        <div class="pinfo">
+          <div class="meta">${p.team} · ${p.years}</div>
+          <h3>${p.name}</h3>
+        </div>
+      </div>
+      <div class="pface pback">
+        <h4>${p.name}</h4>
+        ${p.stats.map(s=>`<div class="stat-line"><span>${s[0]}</span><span>${s[1]}</span></div>`).join('')}
+        <p class="moment">★ ${p.moment}</p>
+        <a href="#" data-video="${p.video}" class="watch">▶ Watch the moment</a>
+        <p class="lyric">"${p.lyric}"</p>
+      </div>
+    </div>`;
+  pg.appendChild(card);
+  const img = card.querySelector('img');
+  attachFallback(img, p.name.split(' ')[0]);
+});
+
+/* ============================================================================
+   RENDER MOMENTS
+   ========================================================================== */
+const mg = document.getElementById('momentsGrid');
+MOMENTS.forEach(m => {
+  const card = document.createElement('div');
+  card.className = 'moment-card reveal';
+  card.innerHTML = `
+    <div class="moment-thumb">
+      <img loading="lazy" alt="${m.title}" src="${m.img}">
+      <div class="play-btn" data-video="${m.video}" role="button" tabindex="0" aria-label="Play ${m.title}"></div>
+    </div>
+    <div class="moment-body">
+      <span class="yr">${m.yr}</span>
+      <h3>${m.title}</h3>
+      <p>${m.desc}</p>
+    </div>`;
+  mg.appendChild(card);
+  attachFallback(card.querySelector('img'), m.title.split(' ')[0]);
+});
+
+/* ============================================================================
+   MODAL (video)
+   ========================================================================== */
+const modal = document.getElementById('modal');
+const modalFrame = document.getElementById('modalFrame');
+function openVideo(url){
+  if(!url) return;
+  modalFrame.src = url + (url.includes('?') ? '&' : '?') + 'autoplay=1';
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeVideo(){
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  modalFrame.src = '';
+}
+document.getElementById('modalClose').addEventListener('click', closeVideo);
+modal.addEventListener('click', e => { if(e.target === modal) closeVideo(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeVideo(); });
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-video]');
+  if(t){ e.preventDefault(); openVideo(t.getAttribute('data-video')); }
+});
+document.addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && document.activeElement.classList.contains('play-btn')){
+    e.preventDefault(); openVideo(document.activeElement.getAttribute('data-video'));
+  }
+});
+
+/* ============================================================================
+   INTERSECTION OBSERVER — reveal + counters + bars
+   ========================================================================== */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(!entry.isIntersecting) return;
+    const el = entry.target;
+    el.classList.add('in');
+
+    // animate count-up numbers
+    el.querySelectorAll('[data-count]').forEach(n => {
+      if(n.dataset.done) return;
+      n.dataset.done = '1';
+      const target = parseFloat(n.dataset.count);
+      const dur = 1500; const start = performance.now();
+      const fmt = v => target >= 1000 ? Math.floor(v).toLocaleString() : Math.floor(v);
+      (function step(now){
+        const t = Math.min((now-start)/dur,1);
+        const eased = 1 - Math.pow(1-t,3);
+        n.textContent = fmt(target*eased);
+        if(t<1) requestAnimationFrame(step);
+      })(start);
+    });
+
+    // grow bars
+    el.querySelectorAll('.fill').forEach(f => { f.style.width = (f.dataset.w||0) + '%'; });
+
+    io.unobserve(el);
+  });
+}, { threshold:0.18, rootMargin:'0px 0px -8% 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ============================================================================
+   SCROLL PARALLAX + 3D depth (debounced via rAF)
+   ========================================================================== */
+const heroBg = document.getElementById('heroBg');
+const nav = document.getElementById('nav');
+let ticking = false;
+
+function onScroll(){
+  const y = window.scrollY;
+
+  // hero parallax (background slower than content)
+  if(heroBg){ heroBg.style.transform = `translateY(${y*0.35}px) scale(${1 + y*0.0004})`; }
+
+  // shrink nav
+  nav.classList.toggle('shrink', y > 60);
+
+  // depth on team cards based on viewport position
+  document.querySelectorAll('.team.in').forEach(card => {
+    const r = card.getBoundingClientRect();
+    const center = window.innerHeight/2;
+    const offset = (r.top + r.height/2 - center) / center; // -1..1
+    const rot = Math.max(-6, Math.min(6, offset * 5));
+    card.style.transform = `rotateX(${ -rot }deg)`;
+  });
+
+  ticking = false;
+}
+window.addEventListener('scroll', () => {
+  if(!ticking){ requestAnimationFrame(onScroll); ticking = true; }
+}, { passive:true });
+onScroll();
+</script>
+</body>
+</html>
