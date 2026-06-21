@@ -210,6 +210,45 @@ Las llamadas a datos pasan por *Route Handlers* proxy (`app/api/summarize`,
 desde la cookie httpOnly y refrescan el access token automáticamente — el
 navegador nunca manipula el JWT.
 
+## Monetización con Stripe (Fase 6)
+
+Planes:
+
+| Plan     | Precio   | Créditos          |
+| -------- | -------- | ----------------- |
+| FREE     | $0       | 5 resúmenes/mes   |
+| PRO      | $9/mes   | 100 resúmenes/mes |
+| BUSINESS | $29/mes  | Ilimitado + API   |
+
+Endpoints del backend:
+
+- `POST /api/billing/create-checkout-session` — crea la sesión de checkout de
+  Stripe (modo suscripción) y devuelve la URL.
+- `POST /api/billing/webhook` — verifica la firma y actualiza plan/créditos ante
+  `checkout.session.completed`, `customer.subscription.*` (alta/cambio/baja),
+  `invoice.payment_succeeded` (recarga créditos) y `invoice.payment_failed`.
+- `GET /api/billing/portal` — link al portal de Stripe para gestionar la
+  suscripción.
+
+El plan BUSINESS es ilimitado: omite el gate de créditos y no descuenta. En el
+frontend, **`/pricing`** muestra las tres tarjetas con botones *Suscribirse* que
+redirigen al checkout de Stripe; el dashboard ofrece *Gestionar suscripción*
+(portal) a los planes de pago.
+
+### Configurar Stripe
+
+Usa **modo de prueba** primero. En tu `.env` (ver `.env.example`):
+
+- `STRIPE_SECRET_KEY` — `sk_test_…` (en producción: `sk_live_…`).
+- `STRIPE_WEBHOOK_SECRET` — `whsec_…` (al crear el endpoint del webhook, o con
+  `stripe listen --forward-to localhost:8000/api/billing/webhook`).
+- `STRIPE_PRICE_PRO` / `STRIPE_PRICE_BUSINESS` — los `price_…` recurrentes de
+  cada plan.
+- `FRONTEND_BASE_URL` — para los redirects de checkout/portal.
+
+> Para producción **solo** reemplazas estos valores en el `.env` por las claves
+> LIVE — no hay nada que cambiar en el código.
+
 ## Roadmap de fases
 
 - [x] **Fase 0** — Setup del proyecto
@@ -218,5 +257,5 @@ navegador nunca manipula el JWT.
 - [x] **Fase 3** — Base de datos y persistencia
 - [x] **Fase 4** — Autenticación y sistema de usuarios
 - [x] **Fase 5** — Frontend funcional
-- [ ] **Fase 6** — Monetización (Stripe)
+- [x] **Fase 6** — Monetización (Stripe)
 - [ ] **Fase 7** — Self-hosting en VPS

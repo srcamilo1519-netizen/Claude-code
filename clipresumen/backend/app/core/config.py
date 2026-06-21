@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
+    # ── Stripe (Fase 6) ──────────────────────────────────────────
+    # Usa claves de TEST de Stripe (sk_test_… / whsec_… / price_… de test)
+    # mientras desarrollas. Para PRODUCCIÓN reemplaza estos valores en tu
+    # `.env` por las claves LIVE (sk_live_…) — no cambies nada en el código.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_pro: str = ""
+    stripe_price_business: str = ""
+    # URL pública del frontend, usada para los redirects de checkout/portal.
+    frontend_base_url: str = "http://localhost:3000"
+
     # ── CORS ─────────────────────────────────────────────────────
     cors_origins: str = "http://localhost:3000"
 

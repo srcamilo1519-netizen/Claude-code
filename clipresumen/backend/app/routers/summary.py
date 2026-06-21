@@ -19,7 +19,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.summary import Summary
 from app.models.usage_log import UsageLog
-from app.models.user import User
+from app.models.user import PlanType, User
 from app.schemas.summary import VideoSummary
 from app.services import summarizer_service, youtube_service
 
@@ -78,7 +78,9 @@ def summarize(
     started = time.monotonic()
 
     # 0. Enforce credits before spending any API tokens.
-    if current_user.credits_remaining <= 0:
+    #    Business plan is unlimited, so it skips the gate.
+    unlimited = current_user.plan == PlanType.business
+    if not unlimited and current_user.credits_remaining <= 0:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="No te quedan créditos. Mejora tu plan o compra más para seguir resumiendo.",
@@ -134,9 +136,10 @@ def summarize(
             tokens_used=summary_result.tokens_used,
         )
     )
-    # Charge one credit for the generated summary.
-    current_user.credits_remaining -= 1
-    db.add(current_user)
+    # Charge one credit for the generated summary (unlimited plans are exempt).
+    if not unlimited:
+        current_user.credits_remaining -= 1
+        db.add(current_user)
     db.commit()
     db.refresh(record)
 

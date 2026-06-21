@@ -30,6 +30,14 @@ export default function DashboardPage() {
     })();
   }, [user]);
 
+  async function openPortal() {
+    const res = await fetch("/api/billing/portal", { cache: "no-store" });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.url) {
+      window.location.href = data.url;
+    }
+  }
+
   if (authLoading || !user) {
     return (
       <>
@@ -59,12 +67,21 @@ export default function DashboardPage() {
                 créditos · plan {user.plan}
               </div>
             </div>
-            <Link
-              href="/pricing"
-              className="rounded-lg bg-accent px-4 py-2 font-medium transition hover:bg-accent-hover"
-            >
-              Mejorar plan
-            </Link>
+            {user.plan === "free" ? (
+              <Link
+                href="/pricing"
+                className="rounded-lg bg-accent px-4 py-2 font-medium transition hover:bg-accent-hover"
+              >
+                Mejorar plan
+              </Link>
+            ) : (
+              <button
+                onClick={openPortal}
+                className="rounded-lg border border-white/10 px-4 py-2 font-medium transition hover:bg-white/5"
+              >
+                Gestionar suscripción
+              </button>
+            )}
           </div>
         </div>
 
