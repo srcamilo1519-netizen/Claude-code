@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+# By default we skip live/network tests. Run them explicitly with:
+#   pytest -m integration
+addopts = "-m 'not integration'"
+testpaths = ["tests"]
+markers = [
+    "integration: tests that hit the network (YouTube). Deselected by default.",
+]

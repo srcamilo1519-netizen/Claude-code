@@ -82,10 +82,38 @@ docker-compose exec backend alembic revision --autogenerate -m "initial"
 docker-compose exec backend alembic upgrade head
 ```
 
+## Tests
+
+Los tests del backend usan `pytest`. Los unitarios corren sin red; los tests
+que llaman a YouTube están marcados como `integration` y se omiten por defecto.
+
+```bash
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt
+
+pytest                 # solo tests offline (rápidos, deterministas)
+pytest -m integration  # incluye extracción real desde YouTube (requiere red)
+```
+
+## Servicio de transcripciones (Fase 1)
+
+`app/services/youtube_service.py` expone `extract_transcript(url)`, que:
+
+- Reconoce URLs `watch?v=`, `youtu.be/`, `shorts/`, `embed/`.
+- Obtiene la transcripción con `youtube-transcript-api`, prefiriendo el idioma
+  original y con fallback a inglés/español.
+- Lee título y duración con `yt-dlp` (solo metadata, sin descargar el video).
+- Aplica un rate limiter básico entre solicitudes a YouTube.
+- Lanza errores específicos: `InvalidYouTubeURLError`, `VideoNotFoundError`,
+  `VideoPrivateError`, `TranscriptNotAvailableError`, `RateLimitedError`.
+
+Devuelve un `TranscriptResult` con `video_id`, `title`, `duration_seconds`,
+`language`, `transcript` y `transcript_length`.
+
 ## Roadmap de fases
 
-- [x] **Fase 0** — Setup del proyecto (este commit)
-- [ ] **Fase 1** — Extracción de transcripciones de YouTube
+- [x] **Fase 0** — Setup del proyecto
+- [x] **Fase 1** — Extracción de transcripciones de YouTube
 - [ ] **Fase 2** — Integración con la API de Claude para resumir
 - [ ] **Fase 3** — Base de datos y persistencia
 - [ ] **Fase 4** — Autenticación y sistema de usuarios
