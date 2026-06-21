@@ -9,6 +9,7 @@ summarized into the final structured result (reduce).
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 import anthropic
 
@@ -16,6 +17,14 @@ from app.core.config import settings
 from app.schemas.summary import VideoSummary
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class SummaryResult:
+    """Structured summary plus the total tokens the Claude call(s) consumed."""
+
+    summary: VideoSummary
+    tokens_used: int
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -94,8 +103,17 @@ def _chunk_text(text: str, max_chars: int = CHUNK_SIZE_CHARS) -> list[str]:
     return chunks
 
 
-def _summarize_chunk(client: anthropic.Anthropic, chunk: str, index: int, total: int) -> str:
-    """Map step: return a concise plain-text summary of one transcript chunk."""
+def _usage_tokens(response: object) -> int:
+    usage = getattr(response, "usage", None)
+    if usage is None:
+        return 0
+    return (getattr(usage, "input_tokens", 0) or 0) + (getattr(usage, "output_tokens", 0) or 0)
+
+
+def _summarize_chunk(
+    client: anthropic.Anthropic, chunk: str, index: int, total: int
+) -> tuple[str, int]:
+    """Map step: return (summary_text, tokens_used) for one transcript chunk."""
     response = client.messages.create(
         model=settings.summarizer_model,
         max_tokens=MAX_TOKENS,
@@ -110,11 +128,12 @@ def _summarize_chunk(client: anthropic.Anthropic, chunk: str, index: int, total:
             }
         ],
     )
-    return "".join(block.text for block in response.content if block.type == "text")
+    text = "".join(block.text for block in response.content if block.type == "text")
+    return text, _usage_tokens(response)
 
 
-def _structured_summary(client: anthropic.Anthropic, text: str) -> VideoSummary:
-    """Reduce step: produce the final structured summary via structured outputs."""
+def _structured_summary(client: anthropic.Anthropic, text: str) -> tuple[VideoSummary, int]:
+    """Reduce step: return (VideoSummary, tokens_used) via structured outputs."""
     response = client.messages.parse(
         model=settings.summarizer_model,
         max_tokens=MAX_TOKENS,
@@ -132,11 +151,11 @@ def _structured_summary(client: anthropic.Anthropic, text: str) -> VideoSummary:
         raise SummarizerResponseError(
             "El modelo no devolvió un resumen con el formato esperado."
         )
-    return summary
+    return summary, _usage_tokens(response)
 
 
-def summarize_transcript(transcript: str) -> VideoSummary:
-    """Summarize a transcript into a :class:`VideoSummary`.
+def summarize_transcript(transcript: str) -> SummaryResult:
+    """Summarize a transcript into a :class:`SummaryResult`.
 
     Raises a :class:`SummarizerError` subclass on failure.
     """
@@ -144,18 +163,22 @@ def summarize_transcript(transcript: str) -> VideoSummary:
         raise SummarizerResponseError("La transcripción está vacía.")
 
     client = _get_client()
+    tokens = 0
 
     try:
         text = transcript
         if len(transcript) > MAX_SINGLE_PASS_CHARS:
             chunks = _chunk_text(transcript)
             logger.info("Transcript too long; map-reducing over %d chunks", len(chunks))
-            partials = [
-                _summarize_chunk(client, chunk, i, len(chunks))
-                for i, chunk in enumerate(chunks, start=1)
-            ]
+            partials = []
+            for i, chunk in enumerate(chunks, start=1):
+                partial, used = _summarize_chunk(client, chunk, i, len(chunks))
+                partials.append(partial)
+                tokens += used
             text = "\n\n".join(partials)
-        return _structured_summary(client, text)
+        summary, used = _structured_summary(client, text)
+        tokens += used
+        return SummaryResult(summary=summary, tokens_used=tokens)
     except anthropic.APITimeoutError as exc:
         raise SummarizerTimeoutError("La solicitud a Claude expiró.") from exc
     except anthropic.RateLimitError as exc:

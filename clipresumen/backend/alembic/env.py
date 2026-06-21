@@ -13,8 +13,8 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import settings
 from app.core.database import Base
 
-# Import model modules here so their tables register on Base.metadata.
-# (Added in Fase 3, e.g. `from app import models  # noqa: F401`)
+# Import model modules so their tables register on Base.metadata.
+from app import models  # noqa: F401,E402
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

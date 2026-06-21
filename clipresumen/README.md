@@ -72,15 +72,41 @@ posteriores.
 
 ## Migraciones (Alembic)
 
-Alembic ya está configurado y lee la URL de la base de datos desde la
-configuración de la app. Aún no hay modelos ni migración inicial (eso llega en
-la Fase 3). Cuando existan modelos:
+Alembic está configurado y lee la URL de la base de datos desde la
+configuración de la app. La migración inicial (tablas `users`, `summaries`,
+`usage_logs`) ya está en `alembic/versions/`. Para aplicarla:
 
 ```bash
 # Dentro del contenedor backend
-docker-compose exec backend alembic revision --autogenerate -m "initial"
 docker-compose exec backend alembic upgrade head
 ```
+
+Para generar nuevas migraciones tras cambiar los modelos:
+
+```bash
+docker-compose exec backend alembic revision --autogenerate -m "mensaje"
+docker-compose exec backend alembic upgrade head
+```
+
+### Modelo de datos (Fase 3)
+
+- **`users`** — `id`, `email`, `password_hash`, `plan` (free/pro/business),
+  `credits_remaining`, `created_at`.
+- **`summaries`** — `id`, `user_id` (FK), `youtube_url`, `video_title`,
+  `video_duration`, `transcript_length`, `summary_json`,
+  `processing_time_seconds`, `created_at`.
+- **`usage_logs`** — `id`, `user_id` (FK), `action`, `tokens_used`,
+  `created_at` (para trackear el costo de la API de Claude por usuario).
+
+Endpoints añadidos:
+
+- `POST /api/summarize` ahora guarda el resumen en `summaries`, registra el uso
+  en `usage_logs` y devuelve el detalle (incluido el `id` del resumen).
+- `GET /api/summaries` — lista los resúmenes del usuario.
+- `GET /api/summaries/{id}` — detalle de un resumen.
+
+> La autenticación llega en la Fase 4. De momento el `user_id` se resuelve con
+> un usuario *dev* temporal (`app/core/deps.py`).
 
 ## Tests
 
@@ -142,7 +168,7 @@ curl -X POST http://localhost:8000/api/summarize \
 - [x] **Fase 0** — Setup del proyecto
 - [x] **Fase 1** — Extracción de transcripciones de YouTube
 - [x] **Fase 2** — Integración con la API de Claude para resumir
-- [ ] **Fase 3** — Base de datos y persistencia
+- [x] **Fase 3** — Base de datos y persistencia
 - [ ] **Fase 4** — Autenticación y sistema de usuarios
 - [ ] **Fase 5** — Frontend funcional
 - [ ] **Fase 6** — Monetización (Stripe)

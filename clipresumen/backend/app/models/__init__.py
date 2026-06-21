@@ -1,5 +1,11 @@
 """ORM models package.
 
-Model modules (users, summaries, usage_logs) are added in Fase 3. Importing
-them here keeps Alembic's autogenerate aware of the full metadata.
+Importing every model here keeps Alembic's autogenerate aware of the full
+metadata and ensures relationship targets are registered.
 """
+
+from app.models.summary import Summary
+from app.models.usage_log import UsageLog
+from app.models.user import PlanType, User
+
+__all__ = ["User", "PlanType", "Summary", "UsageLog"]
