@@ -1,0 +1,86 @@
+# Production stack for a single VPS.
+# Bring up with:  docker compose -f docker-compose.prod.yml up -d --build
+# See README → "Despliegue en un VPS" for the full first-run guide.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clipresumen_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-clipresumen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-clipresumen}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clipresumen} -d ${POSTGRES_DB:-clipresumen}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: clipresumen_backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://clipresumen:changeme@postgres:5432/clipresumen}
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: clipresumen_frontend
+    restart: always
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: http://backend:8000
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: clipresumen_nginx
+    restart: always
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+    # Reload every 6h so renewed certificates are picked up without downtime.
+    command: >-
+      /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done &
+      exec nginx -g 'daemon off;'"
+    depends_on:
+      - frontend
+      - backend
+
+  certbot:
+    image: certbot/certbot
+    container_name: clipresumen_certbot
+    restart: always
+    volumes:
+      - ./certbot/www:/var/www/certbot:rw
+      - ./certbot/conf:/etc/letsencrypt:rw
+    # Attempt renewal twice a day; certbot only renews when near expiry.
+    entrypoint: >-
+      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot;
+      sleep 12h & wait $${!}; done"
+
+volumes:
+  postgres_data:

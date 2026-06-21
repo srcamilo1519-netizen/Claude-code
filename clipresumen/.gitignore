@@ -36,3 +36,8 @@ build/
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Production runtime data
+certbot/
+backups/
+*.sql.gz

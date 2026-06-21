@@ -1,0 +1,61 @@
+# Rendered by the official nginx image: ${DOMAIN} is substituted from the
+# environment; nginx runtime variables ($host, $remote_addr, …) are left intact.
+
+limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
+
+upstream frontend { server frontend:3000; }
+upstream backend  { server backend:8000; }
+
+# ── HTTP: ACME challenge + redirect to HTTPS ──────────────────────────
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ── HTTPS ─────────────────────────────────────────────────────────────
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    client_max_body_size 2m;
+
+    # Stripe webhook → backend. Kept off /api/ so it does not shadow the
+    # frontend's own Next.js /api/* route handlers.
+    location = /webhook/stripe {
+        limit_req zone=general burst=20 nodelay;
+        proxy_pass http://backend/api/billing/webhook;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Everything else → the Next.js frontend (which proxies authed calls to
+    # the backend server-side using the httpOnly cookie).
+    location / {
+        limit_req zone=general burst=20 nodelay;
+        proxy_pass http://frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

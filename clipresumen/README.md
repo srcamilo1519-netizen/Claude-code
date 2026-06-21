@@ -3,10 +3,11 @@
 Resumidor de videos de YouTube con IA. SaaS construido con **FastAPI**,
 **Next.js**, **PostgreSQL** y la **API de Claude (Anthropic)**.
 
-> Estado actual: **Fase 0 — esqueleto funcional**. El proyecto levanta con
-> `docker-compose up` pero todavía no incluye lógica de negocio (extracción de
-> transcripciones, resúmenes, auth, etc.). Esas funcionalidades se añaden en las
-> fases siguientes.
+> Estado actual: **Fases 0–7 completas**. Extracción de transcripciones,
+> resúmenes con IA, persistencia, autenticación JWT, frontend funcional,
+> monetización con Stripe y despliegue en VPS (Nginx + SSL + backups +
+> monitoreo). Desarrollo: `docker-compose up`. Producción: ver
+> [Despliegue en un VPS](#despliegue-en-un-vps-fase-7).
 
 ## Stack
 
@@ -249,6 +250,134 @@ Usa **modo de prueba** primero. En tu `.env` (ver `.env.example`):
 > Para producción **solo** reemplazas estos valores en el `.env` por las claves
 > LIVE — no hay nada que cambiar en el código.
 
+## Despliegue en un VPS (Fase 7)
+
+Stack de producción: imágenes multi-stage (más pequeñas, sin hot-reload), Nginx
+como reverse proxy con SSL automático (Certbot/Let's Encrypt), redirección
+HTTP→HTTPS y rate limiting. Todo con `docker-compose.prod.yml`.
+
+### Arquitectura en producción
+
+```
+Internet ──443/80──▶ Nginx ─┬─ /                → frontend (Next.js :3000)
+                            └─ /webhook/stripe   → backend  (FastAPI :8000)
+                                                   backend ──▶ postgres
+```
+
+El navegador solo habla con Nginx→frontend; el frontend hace de proxy al
+backend (con el token de la cookie httpOnly). El backend solo se expone
+públicamente para el webhook de Stripe.
+
+### 1. Comprar y preparar el VPS
+
+- **Proveedor/tamaño recomendado:** Hetzner **CX22** (2 vCPU / 4 GB, ~€4/mes) o
+  DigitalOcean **2 vCPU / 4 GB**. Suficiente para los primeros cientos de
+  usuarios. Imagen: **Ubuntu 22.04**.
+- Entra por SSH y prepara el firewall y Docker:
+
+  ```bash
+  # Firewall: solo SSH + HTTP + HTTPS
+  ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
+
+  # Docker + plugin compose
+  curl -fsSL https://get.docker.com | sh
+  ```
+
+### 2. Apuntar tu dominio al servidor
+
+En tu registrador (Namecheap, Cloudflare, …) crea un registro **A**:
+
+| Tipo | Nombre | Valor            |
+| ---- | ------ | ---------------- |
+| A    | `@`    | IP de tu VPS     |
+| A    | `www`  | IP de tu VPS *(opcional)* |
+
+Espera a que propague (`dig +short tu-dominio.com` debe devolver la IP).
+
+### 3. Clonar y configurar
+
+```bash
+git clone <url-del-repo> /opt/clipresumen
+cd /opt/clipresumen/clipresumen
+cp .env.example .env
+nano .env   # completa TODAS las variables
+```
+
+En `.env` para producción, asegúrate de definir como mínimo:
+
+- `POSTGRES_PASSWORD` (clave fuerte) y `DATABASE_URL` acorde.
+- `ANTHROPIC_API_KEY`, `JWT_SECRET` (`openssl rand -hex 32`).
+- `DOMAIN` y `CERTBOT_EMAIL`.
+- Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`,
+  `FRONTEND_BASE_URL=https://tu-dominio.com`.
+
+### 4. Primer despliegue desde cero
+
+```bash
+cd /opt/clipresumen/clipresumen
+
+# Construir imágenes y aplicar migraciones
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d postgres
+docker compose -f docker-compose.prod.yml run --rm backend alembic upgrade head
+
+# Emitir el certificado TLS (levanta también backend, frontend y nginx)
+./init-letsencrypt.sh
+```
+
+> Consejo: pon `CERTBOT_STAGING=1` en `.env` la primera vez para no gastar el
+> límite de Let's Encrypt; cuando funcione, ponlo a `0` y vuelve a ejecutar
+> `./init-letsencrypt.sh`.
+
+Verifica: `docker compose -f docker-compose.prod.yml ps` y abre
+`https://tu-dominio.com`.
+
+### 5. Webhook de Stripe
+
+En el dashboard de Stripe → Developers → Webhooks, crea un endpoint apuntando a
+`https://tu-dominio.com/webhook/stripe` y copia el `whsec_…` a
+`STRIPE_WEBHOOK_SECRET` en `.env`. Luego `./deploy.sh` (o reinicia el backend).
+
+### 6. Actualizaciones (sin downtime apreciable)
+
+```bash
+./deploy.sh   # pull → build → migrate → recrea solo backend/frontend
+```
+
+### 7. Backups automáticos de PostgreSQL
+
+`backup.sh` hace `pg_dump | gzip` a `./backups` y, si configuras
+`BACKUP_RCLONE_REMOTE`, lo sube a almacenamiento externo (S3, B2, …) con
+[rclone](https://rclone.org). Prográmalo a diario con cron:
+
+```bash
+crontab -e
+# 0 3 * * *  cd /opt/clipresumen/clipresumen && ./backup.sh >> /var/log/clipresumen-backup.log 2>&1
+```
+
+Restaurar: `gunzip -c backups/archivo.sql.gz | docker compose -f docker-compose.prod.yml exec -T postgres psql -U clipresumen -d clipresumen`.
+
+### 8. Monitoreo (opcional) — logs centralizados
+
+Stack ligero Loki + Promtail + Grafana:
+
+```bash
+docker compose -f docker-compose.monitoring.yml up -d
+# Grafana queda en localhost; accede por túnel SSH:
+ssh -L 3001:localhost:3001 usuario@tu-servidor   # → http://localhost:3001
+```
+
+Promtail recoge los logs de todos los contenedores y los envía a Loki; Grafana
+viene con el datasource de Loki ya provisionado.
+
+### Comandos útiles
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml restart backend
+```
+
 ## Roadmap de fases
 
 - [x] **Fase 0** — Setup del proyecto
@@ -258,4 +387,4 @@ Usa **modo de prueba** primero. En tu `.env` (ver `.env.example`):
 - [x] **Fase 4** — Autenticación y sistema de usuarios
 - [x] **Fase 5** — Frontend funcional
 - [x] **Fase 6** — Monetización (Stripe)
-- [ ] **Fase 7** — Self-hosting en VPS
+- [x] **Fase 7** — Self-hosting en VPS
