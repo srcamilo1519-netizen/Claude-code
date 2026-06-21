@@ -190,6 +190,26 @@ endpoint responde **402 Payment Required**.
 > Variable nueva: `BACKEND_URL` (URL interna que usan los Route Handlers para
 > alcanzar el backend; en docker-compose es `http://backend:8000`).
 
+## Frontend funcional (Fase 5)
+
+Páginas (Next.js App Router, TailwindCSS, tema oscuro, mobile-first):
+
+- **`/`** — input grande para la URL de YouTube, botón *Resumir* con spinner de
+  carga. Sin sesión muestra el preview pero redirige a login antes de procesar;
+  con sesión llama a `/api/summarize` y navega al resultado. Maneja el 402
+  (sin créditos).
+- **`/summary/[id]`** — video de YouTube embebido arriba, resumen estructurado
+  (título, puntos clave, resumen extendido, timestamps, conclusión), y botones
+  para **copiar**, **descargar Markdown** y **descargar PDF** (jsPDF, cargado de
+  forma lazy).
+- **`/dashboard`** — historial de resúmenes, créditos restantes y plan visibles,
+  y botón *Mejorar plan* (→ `/pricing`, Fase 6).
+
+Las llamadas a datos pasan por *Route Handlers* proxy (`app/api/summarize`,
+`app/api/summaries`, `app/api/summaries/[id]`) que adjuntan el Bearer token
+desde la cookie httpOnly y refrescan el access token automáticamente — el
+navegador nunca manipula el JWT.
+
 ## Roadmap de fases
 
 - [x] **Fase 0** — Setup del proyecto
@@ -197,6 +217,6 @@ endpoint responde **402 Payment Required**.
 - [x] **Fase 2** — Integración con la API de Claude para resumir
 - [x] **Fase 3** — Base de datos y persistencia
 - [x] **Fase 4** — Autenticación y sistema de usuarios
-- [ ] **Fase 5** — Frontend funcional
+- [x] **Fase 5** — Frontend funcional
 - [ ] **Fase 6** — Monetización (Stripe)
 - [ ] **Fase 7** — Self-hosting en VPS
