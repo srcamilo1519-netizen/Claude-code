@@ -33,3 +33,6 @@ build/
 
 # Docker
 *.log
+
+# TypeScript build info
+*.tsbuildinfo

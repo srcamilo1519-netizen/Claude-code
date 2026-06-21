@@ -163,13 +163,40 @@ curl -X POST http://localhost:8000/api/summarize \
 
 > Requiere `ANTHROPIC_API_KEY` en el `.env`. Aún sin autenticación (Fase 4).
 
+## Autenticación (Fase 4)
+
+JWT con bcrypt. Endpoints del backend:
+
+- `POST /api/auth/register` — registro (email + password ≥ 8). Hashea con
+  bcrypt y devuelve `access_token` + `refresh_token`.
+- `POST /api/auth/login` — devuelve ambos tokens.
+- `POST /api/auth/refresh` — renueva el `access_token`.
+- `GET /api/auth/me` — perfil del usuario autenticado.
+
+Las rutas `/api/summarize` y `/api/summaries*` quedan protegidas por la
+dependencia `get_current_user` (valida el Bearer token). Cada usuario nuevo
+recibe **5 créditos**; cada resumen descuenta 1, y si no quedan créditos el
+endpoint responde **402 Payment Required**.
+
+### Frontend
+
+- Páginas `/login` y `/register`.
+- `AuthContext` (`context/AuthContext.tsx`) con estado de sesión global.
+- Los tokens se guardan en **cookies httpOnly** (no `localStorage`), gestionadas
+  por *Route Handlers* de Next (`app/api/auth/*`) que hacen de proxy al backend.
+  El navegador nunca ve el token; `/api/auth/me` refresca el access token
+  automáticamente con el refresh token cuando expira.
+
+> Variable nueva: `BACKEND_URL` (URL interna que usan los Route Handlers para
+> alcanzar el backend; en docker-compose es `http://backend:8000`).
+
 ## Roadmap de fases
 
 - [x] **Fase 0** — Setup del proyecto
 - [x] **Fase 1** — Extracción de transcripciones de YouTube
 - [x] **Fase 2** — Integración con la API de Claude para resumir
 - [x] **Fase 3** — Base de datos y persistencia
-- [ ] **Fase 4** — Autenticación y sistema de usuarios
+- [x] **Fase 4** — Autenticación y sistema de usuarios
 - [ ] **Fase 5** — Frontend funcional
 - [ ] **Fase 6** — Monetización (Stripe)
 - [ ] **Fase 7** — Self-hosting en VPS

@@ -1,31 +1,37 @@
-"""Shared FastAPI dependencies.
+"""Shared FastAPI dependencies — authentication.
 
-`get_current_user` is a **temporary** stand-in until Fase 4 wires real JWT
-authentication. It get-or-creates a single dev user so the persistence layer
-has a `user_id` to attach summaries and usage logs to. Endpoints depend on this
-function, so swapping it for token-based auth in Fase 4 won't change their
-signatures.
+`get_current_user` validates the Bearer access token and loads the user.
+Protected endpoints (summarize, summaries, /auth/me) depend on it, so they
+reject requests without a valid token. This replaces the Fase 3 dev stand-in.
 """
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.user import DEFAULT_FREE_CREDITS, PlanType, User
+from app.core.security import ACCESS_TOKEN_TYPE, TokenError, decode_token
+from app.models.user import User
 
-DEV_USER_EMAIL = "dev@clipresumen.local"
+bearer_scheme = HTTPBearer(auto_error=True)
 
 
-def get_current_user(db: Session = Depends(get_db)) -> User:
-    user = db.query(User).filter(User.email == DEV_USER_EMAIL).first()
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    unauthorized = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No autenticado.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = decode_token(credentials.credentials, expected_type=ACCESS_TOKEN_TYPE)
+    except TokenError as exc:
+        raise unauthorized from exc
+
+    user_id = payload.get("sub")
+    user = db.get(User, int(user_id)) if user_id else None
     if user is None:
-        user = User(
-            email=DEV_USER_EMAIL,
-            password_hash="!unusable",  # placeholder; real hashing arrives in Fase 4
-            plan=PlanType.free,
-            credits_remaining=DEFAULT_FREE_CREDITS,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        raise unauthorized
     return user

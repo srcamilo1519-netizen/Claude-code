@@ -11,7 +11,7 @@ a temporary dev stand-in (see app/core/deps.py).
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -77,6 +77,13 @@ def summarize(
 ) -> SummarizeResponse:
     started = time.monotonic()
 
+    # 0. Enforce credits before spending any API tokens.
+    if current_user.credits_remaining <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="No te quedan créditos. Mejora tu plan o compra más para seguir resumiendo.",
+        )
+
     # 1. Extract transcript + metadata from YouTube.
     try:
         result = youtube_service.extract_transcript(payload.url)
@@ -127,6 +134,9 @@ def summarize(
             tokens_used=summary_result.tokens_used,
         )
     )
+    # Charge one credit for the generated summary.
+    current_user.credits_remaining -= 1
+    db.add(current_user)
     db.commit()
     db.refresh(record)
 
