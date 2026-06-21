@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     # ── Anthropic / Claude ───────────────────────────────────────
     anthropic_api_key: str = ""
+    # Model used for summarization. Sonnet 4.6 supports structured outputs.
+    summarizer_model: str = "claude-sonnet-4-6"
 
     # ── Auth (used from Fase 4 onward) ───────────────────────────
     jwt_secret: str = "change-me"

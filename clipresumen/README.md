@@ -110,11 +110,38 @@ pytest -m integration  # incluye extracción real desde YouTube (requiere red)
 Devuelve un `TranscriptResult` con `video_id`, `title`, `duration_seconds`,
 `language`, `transcript` y `transcript_length`.
 
+## Resumen con IA (Fase 2)
+
+`app/services/summarizer_service.py` expone `summarize_transcript(text)`, que:
+
+- Usa el modelo **`claude-sonnet-4-6`** (configurable con `SUMMARIZER_MODEL`).
+- Genera un `VideoSummary` estructurado (título, puntos clave, resumen
+  extendido, timestamps relevantes, conclusión/CTA) mediante *structured
+  outputs* (`messages.parse`), de modo que el JSON se renderiza directo en el
+  frontend.
+- El system prompt prohíbe explícitamente inventar información ausente en la
+  transcripción.
+- Para transcripciones muy largas (>100.000 caracteres) aplica *map-reduce*:
+  resume cada fragmento y luego resume los resúmenes parciales.
+- Maneja errores de la API: timeout, rate limit, respuestas malformadas, falta
+  de `ANTHROPIC_API_KEY`.
+
+El endpoint **`POST /api/summarize`** conecta `youtube_service` +
+`summarizer_service` y devuelve el resultado final:
+
+```bash
+curl -X POST http://localhost:8000/api/summarize \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://www.youtube.com/watch?v=VIDEO_ID"}'
+```
+
+> Requiere `ANTHROPIC_API_KEY` en el `.env`. Aún sin autenticación (Fase 4).
+
 ## Roadmap de fases
 
 - [x] **Fase 0** — Setup del proyecto
 - [x] **Fase 1** — Extracción de transcripciones de YouTube
-- [ ] **Fase 2** — Integración con la API de Claude para resumir
+- [x] **Fase 2** — Integración con la API de Claude para resumir
 - [ ] **Fase 3** — Base de datos y persistencia
 - [ ] **Fase 4** — Autenticación y sistema de usuarios
 - [ ] **Fase 5** — Frontend funcional
