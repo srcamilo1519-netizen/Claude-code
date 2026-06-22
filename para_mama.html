@@ -3,408 +3,821 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Para mi Mamita Bella 💐</title>
+  <title>Esdras Luz — Mi Mamita Bella 🌻</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Dancing+Script:wght@400;700&family=Lato:wght@300;400&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --rose:   #f472b6;
-      --rose2:  #ec4899;
-      --gold:   #fbbf24;
-      --cream:  #fff7ed;
-      --purple: #a855f7;
-      --deep:   #1e0a2e;
+      --gold:   #f5c518;
+      --gold2:  #e8a000;
+      --amber:  #ffb703;
+      --sun:    #fb8500;
+      --green:  #2d6a4f;
+      --green2: #40916c;
+      --cream:  #fffbf0;
+      --dark:   #1a0f00;
+      --brown:  #6b3f00;
     }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
+    html { scroll-behavior: smooth; }
 
     body {
-      background: radial-gradient(ellipse at 20% 50%, #2d0a4e 0%, #0f0520 60%, #000 100%);
-      font-family: 'Playfair Display', serif;
-      perspective: 1200px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
+      background: linear-gradient(160deg, #0d1f0a 0%, #1a3a10 40%, #0a1500 100%);
+      color: var(--cream);
+      font-family: 'Lato', sans-serif;
+      overflow-x: hidden;
     }
 
-    /* ── Particle stars ── */
-    #stars {
+    /* ═══════════════════════════════════════
+       STARS / FIREFLIES
+    ═══════════════════════════════════════ */
+    #bg-canvas {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 0;
     }
-    .star {
-      position: absolute;
-      border-radius: 50%;
-      background: white;
-      animation: twinkle var(--d) ease-in-out infinite alternate;
-    }
-    @keyframes twinkle {
-      from { opacity: 0.1; transform: scale(1); }
-      to   { opacity: 1;   transform: scale(1.6); }
-    }
 
-    /* ── Floating petals ── */
+    /* ═══════════════════════════════════════
+       FLOATING SUNFLOWER PETALS
+    ═══════════════════════════════════════ */
     .petal {
       position: fixed;
       font-size: 1.4rem;
       pointer-events: none;
       z-index: 1;
-      animation: fall var(--fd) linear infinite;
+      animation: fall var(--fd) linear infinite var(--delay);
       opacity: 0;
       top: -60px;
     }
     @keyframes fall {
-      0%   { transform: translateY(0) rotate(0deg) translateX(0);   opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 0.8; }
-      100% { transform: translateY(110vh) rotate(720deg) translateX(var(--fx)); opacity: 0; }
+      0%   { transform: translateY(0)     translateX(0)          rotate(0deg);   opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 0.7; }
+      100% { transform: translateY(110vh) translateX(var(--fx))  rotate(540deg); opacity: 0; }
     }
 
-    /* ── Scene wrapper ── */
-    #scene {
+    /* ═══════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
       position: relative;
       z-index: 10;
-      transform-style: preserve-3d;
-      animation: float 6s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%,100% { transform: translateY(0px)    rotateX(2deg); }
-      50%      { transform: translateY(-18px)  rotateX(-2deg); }
+      padding: 2rem 1rem 4rem;
     }
 
-    /* ── Card ── */
-    .card {
-      width: min(480px, 92vw);
-      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 28px;
-      padding: 3rem 2.5rem;
-      text-align: center;
-      box-shadow:
-        0 0 0 1px rgba(244,114,182,0.2),
-        0 8px 32px rgba(0,0,0,0.6),
-        0 32px 80px rgba(168,85,247,0.25),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    /* 3-D floating scene */
+    #scene {
+      perspective: 1000px;
       transform-style: preserve-3d;
+    }
+
+    .hero-card {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(245,197,24,0.3);
+      border-radius: 32px;
+      padding: 3rem 2.5rem 2.5rem;
+      max-width: 520px;
+      width: 92vw;
       position: relative;
-      overflow: hidden;
+      transform-style: preserve-3d;
+      animation: cardFloat 7s ease-in-out infinite;
+      box-shadow:
+        0 0 0 1px rgba(245,197,24,0.15),
+        0 8px 40px rgba(0,0,0,0.7),
+        0 40px 100px rgba(245,197,24,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    @keyframes cardFloat {
+      0%,100% { transform: translateY(0)    rotateX(2deg) rotateY(-1deg); }
+      33%     { transform: translateY(-14px) rotateX(-1deg) rotateY(2deg); }
+      66%     { transform: translateY(-8px)  rotateX(3deg)  rotateY(-2deg); }
     }
 
-    /* glow rim */
-    .card::before {
+    /* spinning gold ring */
+    .hero-card::before {
       content: '';
       position: absolute;
-      inset: -2px;
-      border-radius: 30px;
-      background: conic-gradient(from 0deg, var(--rose), var(--gold), var(--purple), var(--rose));
+      inset: -3px;
+      border-radius: 34px;
+      background: conic-gradient(from 0deg, var(--gold), var(--sun), var(--green2), var(--gold));
       z-index: -1;
-      animation: spin 4s linear infinite;
-      filter: blur(6px);
-      opacity: 0.7;
+      animation: spinRing 5s linear infinite;
+      filter: blur(5px);
+      opacity: 0.6;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spinRing { to { transform: rotate(360deg); } }
 
-    /* inner shine line */
-    .card::after {
+    /* profile photo ring */
+    .profile-wrap {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      margin: 0 auto 1.4rem;
+      position: relative;
+      transform: translateZ(30px);
+    }
+    .profile-wrap::before {
       content: '';
       position: absolute;
-      top: 0; left: 10%; right: 10%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(var(--gold), var(--sun), var(--amber), var(--gold));
+      animation: spinRing 3s linear infinite;
+      z-index: -1;
+    }
+    .profile-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #fff2;
+      display: block;
     }
 
-    /* ── Heart emoji title ── */
-    .heart-row {
-      font-size: 2.6rem;
-      margin-bottom: 0.4rem;
-      filter: drop-shadow(0 0 12px var(--rose));
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { transform: scale(1); }
-      50%      { transform: scale(1.15); }
-    }
+    .hero-sunflower { font-size: 2.2rem; animation: bounce 1.4s ease-in-out infinite; transform: translateZ(20px); display: inline-block; }
+    @keyframes bounce { 0%,100%{transform:translateZ(20px) scale(1)} 50%{transform:translateZ(30px) scale(1.2)} }
 
-    h1 {
+    h1.name {
       font-family: 'Dancing Script', cursive;
-      font-size: clamp(2rem, 7vw, 3rem);
-      color: #fff;
-      text-shadow:
-        0 0 20px var(--rose),
-        0 0 40px var(--rose2),
-        0 2px 4px rgba(0,0,0,0.8);
-      letter-spacing: 0.02em;
-      margin-bottom: 0.3rem;
+      font-size: clamp(2rem, 7vw, 3.2rem);
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(245,197,24,0.7), 0 2px 4px rgba(0,0,0,0.8);
+      line-height: 1.15;
+      margin: 0.3rem 0;
+      transform: translateZ(15px);
     }
-
-    .subtitle {
+    .tagline {
       font-family: 'Playfair Display', serif;
       font-style: italic;
-      font-size: 0.95rem;
-      color: rgba(251,191,36,0.9);
-      letter-spacing: 0.12em;
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .birth-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold2), var(--sun));
+      color: var(--dark);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      box-shadow: 0 4px 15px rgba(245,197,24,0.4);
+      transform: translateZ(25px);
+      margin-bottom: 1.6rem;
     }
 
-    /* ── 3D flower ── */
-    .flower-stage {
-      perspective: 400px;
-      margin: 0 auto 1.8rem;
-      width: 120px;
-      height: 120px;
+    /* virtues chips */
+    .virtues {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      transform: translateZ(20px);
     }
-    .flower {
+    .chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(245,197,24,0.35);
+      border-radius: 999px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.05em;
+    }
+    .chip span { margin-right: 0.3rem; }
+
+    /* ═══════════════════════════════════════
+       SECTIONS SHARED
+    ═══════════════════════════════════════ */
+    section {
+      position: relative;
+      z-index: 10;
+      padding: 4rem 1rem;
+    }
+    .section-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      color: var(--gold);
+      text-align: center;
+      text-shadow: 0 0 20px rgba(245,197,24,0.5);
+      margin-bottom: 2.5rem;
+    }
+
+    /* ═══════════════════════════════════════
+       MESSAGE SECTION
+    ═══════════════════════════════════════ */
+    #mensaje {
+      background: linear-gradient(180deg, transparent, rgba(245,197,24,0.04), transparent);
+    }
+    .message-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .msg-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(245,197,24,0.2);
+      border-radius: 20px;
+      padding: 1.8rem;
+      text-align: center;
+      transition: transform 0.4s, box-shadow 0.4s;
+      cursor: default;
+    }
+    .msg-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 50px rgba(245,197,24,0.2);
+      border-color: rgba(245,197,24,0.5);
+    }
+    .msg-card .icon { font-size: 2.4rem; margin-bottom: 0.8rem; display: block; }
+    .msg-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      color: var(--gold);
+      margin-bottom: 0.6rem;
+    }
+    .msg-card p {
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* ═══════════════════════════════════════
+       PHOTO GALLERY
+    ═══════════════════════════════════════ */
+    #galeria {
+      padding: 4rem 1rem;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .photo-item {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 3/4;
+      cursor: pointer;
+      transform: scale(1);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s;
+      border: 2px solid rgba(245,197,24,0.2);
+    }
+    .photo-item:hover {
+      transform: scale(1.04) translateY(-6px);
+      box-shadow: 0 20px 50px rgba(245,197,24,0.3);
+      border-color: rgba(245,197,24,0.6);
+    }
+    .photo-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-item .overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 50%);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .photo-item:hover .overlay { opacity: 1; }
+    .photo-item .overlay span {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1rem;
+      color: var(--gold);
+    }
+
+    /* Featured (large) photo */
+    .photo-item.featured {
+      grid-column: span 2;
+      aspect-ratio: 4/5;
+    }
+
+    /* ═══════════════════════════════════════
+       TIMELINE
+    ═══════════════════════════════════════ */
+    #historia {
+      background: rgba(0,0,0,0.2);
+    }
+    .timeline {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      padding-left: 2.5rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0.6rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--gold), var(--green2), var(--gold));
+    }
+    .tl-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+      padding: 1.4rem 1.6rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(245,197,24,0.2);
+      border-radius: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .tl-item:hover {
+      border-color: rgba(245,197,24,0.5);
+      box-shadow: 0 8px 30px rgba(245,197,24,0.15);
+    }
+    .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -1.9rem;
+      top: 1.4rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 12px var(--gold);
+    }
+    .tl-item .year {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.3rem;
+    }
+    .tl-item h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      color: var(--cream);
+      margin-bottom: 0.4rem;
+    }
+    .tl-item p {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.65;
+    }
+
+    /* ═══════════════════════════════════════
+       SUNFLOWER 3D SPINNER
+    ═══════════════════════════════════════ */
+    #flor-section {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .flower-stage {
+      perspective: 500px;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 1rem;
+    }
+    .flower3d {
       width: 100%;
       height: 100%;
       transform-style: preserve-3d;
-      animation: spin3d 8s linear infinite;
+      animation: spin3d 10s linear infinite;
       position: relative;
     }
-    @keyframes spin3d {
-      to { transform: rotateY(360deg) rotateX(20deg); }
-    }
-    .petal-3d {
+    @keyframes spin3d { to { transform: rotateY(360deg) rotateX(15deg); } }
+
+    .petal3 {
       position: absolute;
-      width: 50px;
-      height: 70px;
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      width: 52px;
+      height: 76px;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
       top: 50%; left: 50%;
-      margin: -35px 0 0 -25px;
+      margin: -38px 0 0 -26px;
       transform-origin: center bottom;
-      backface-visibility: visible;
     }
-    .center-3d {
+    .center3 {
       position: absolute;
-      width: 36px;
-      height: 36px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       top: 50%; left: 50%;
-      transform: translate(-50%,-50%) translateZ(10px);
-      background: radial-gradient(circle at 35% 35%, #fef08a, #f59e0b);
-      box-shadow: 0 0 18px #fbbf24, 0 0 6px #fff;
+      transform: translate(-50%,-50%) translateZ(16px);
+      background: radial-gradient(circle at 35% 35%, #78350f, #92400e);
+      box-shadow: 0 0 20px #92400e, 0 0 8px rgba(255,255,255,0.3);
       z-index: 10;
     }
-
-    /* ── Message box ── */
-    .message {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(244,114,182,0.25);
-      border-radius: 16px;
-      padding: 1.4rem 1.6rem;
-      margin-bottom: 1.8rem;
-      transform: translateZ(20px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
-    }
-    .message p {
-      color: rgba(255,255,255,0.92);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    }
-    .message p span {
-      color: var(--gold);
-      font-style: italic;
-    }
-
-    /* ── Signature ── */
-    .signature {
-      font-family: 'Dancing Script', cursive;
-      font-size: 1.5rem;
-      color: var(--rose);
-      text-shadow: 0 0 16px var(--rose2);
-      margin-bottom: 0.5rem;
-    }
-
-    /* ── 3D Ribbon banner ── */
-    .ribbon {
-      position: relative;
-      background: linear-gradient(90deg, var(--rose2), var(--purple), var(--rose2));
-      color: #fff;
-      font-size: 0.8rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      padding: 0.45rem 1.5rem;
-      border-radius: 4px;
-      display: inline-block;
-      box-shadow:
-        0 4px 0 rgba(0,0,0,0.35),
-        0 8px 20px rgba(168,85,247,0.4);
-      transform: translateZ(30px);
-      margin-top: 0.5rem;
-    }
-    .ribbon::before,
-    .ribbon::after {
+    .center3::after {
       content: '';
       position: absolute;
-      top: 100%;
-      border: 8px solid transparent;
-    }
-    .ribbon::before { left: 0;  border-right-color: var(--rose2); border-top-color: var(--rose2); }
-    .ribbon::after  { right: 0; border-left-color:  var(--purple); border-top-color: var(--purple); }
-
-    /* ── Sparkle dots ── */
-    .sparkles {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .sp {
-      position: absolute;
+      inset: 5px;
       border-radius: 50%;
-      background: white;
-      animation: sparkle var(--sd) ease-in-out infinite var(--ss);
+      background: radial-gradient(circle at 40% 40%, #a16207, #78350f);
     }
-    @keyframes sparkle {
-      0%,100% { opacity: 0; transform: scale(0); }
-      50%      { opacity: 1; transform: scale(1); }
+
+    /* ═══════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════ */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 3rem 1rem 4rem;
+      border-top: 1px solid rgba(245,197,24,0.15);
+    }
+    footer .love {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(245,197,24,0.6);
+      margin-bottom: 0.6rem;
+    }
+    footer p {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ═══════════════════════════════════════
+       LIGHTBOX
+    ═══════════════════════════════════════ */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(245,197,24,0.3);
+      animation: zoomIn 0.3s ease;
+    }
+    @keyframes zoomIn { from{transform:scale(0.85);opacity:0} to{transform:scale(1);opacity:1} }
+    #lightbox-close {
+      position: absolute;
+      top: 1.2rem; right: 1.5rem;
+      font-size: 2.2rem;
+      color: white;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      background: none;
+      border: none;
+      line-height: 1;
+    }
+    #lightbox-close:hover { opacity: 1; }
+
+    /* ═══════════════════════════════════════
+       SCROLL REVEAL
+    ═══════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE TWEAKS
+    ═══════════════════════════════════════ */
+    @media (max-width: 480px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+      .photo-item.featured { grid-column: span 2; }
+      .hero-card { padding: 2rem 1.5rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- Background stars -->
-<div id="stars"></div>
+<!-- Firefly canvas -->
+<canvas id="bg-canvas"></canvas>
 
 <!-- Floating petals -->
-<div id="petals"></div>
+<div id="petals-wrap"></div>
 
-<!-- Main scene -->
-<div id="scene">
-  <div class="card">
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div id="scene">
+    <div class="hero-card" id="hero-card">
 
-    <!-- Inner sparkles -->
-    <div class="sparkles" id="sparkles"></div>
-
-    <div class="heart-row">💖</div>
-    <h1>Para mi Mamita</h1>
-    <p class="subtitle">Con todo mi amor</p>
-
-    <!-- 3D Flower -->
-    <div class="flower-stage">
-      <div class="flower" id="flower">
-        <div class="center-3d"></div>
+      <div class="profile-wrap">
+        <img src="fotos/sombrero.jpg" alt="Esdras Luz" />
       </div>
+
+      <div class="hero-sunflower">🌻</div>
+      <h1 class="name">Esdras Luz<br/>Sánchez Peña</h1>
+      <p class="tagline">La mujer más bella de mi universo</p>
+
+      <div class="birth-badge">🎂 24 de agosto de 1987 · San Juan, RD</div>
+
+      <div class="virtues">
+        <div class="chip"><span>💛</span>Virtud</div>
+        <div class="chip"><span>💪</span>Luchadora</div>
+        <div class="chip"><span>👩‍👦</span>Madre</div>
+        <div class="chip"><span>⭐</span>Excelente</div>
+        <div class="chip"><span>🌿</span>Bienestar</div>
+        <div class="chip"><span>❤️</span>Familia</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SUNFLOWER SPINNER ═══ -->
+<div id="flor-section" class="reveal">
+  <div class="flower-stage">
+    <div class="flower3d" id="flower3d">
+      <div class="center3"></div>
+    </div>
+  </div>
+  <p style="color:rgba(255,255,255,0.5);font-size:0.8rem;letter-spacing:0.15em;text-transform:uppercase;">Sus flores favoritas</p>
+</div>
+
+<!-- ═══ MESSAGE CARDS ═══ -->
+<section id="mensaje">
+  <h2 class="section-title reveal">Para ti, Mamita</h2>
+  <div class="message-grid">
+
+    <div class="msg-card reveal">
+      <span class="icon">🌻</span>
+      <h3>Como el girasol</h3>
+      <p>Siempre buscas la luz, irradias calor y llenas de color todo lo que tocas. Como tu flor favorita, eres la que da vida.</p>
     </div>
 
-    <!-- Message -->
-    <div class="message">
-      <p>
-        Eres la <span>luz más brillante</span> de mi vida,<br/>
-        la fuerza que me impulsa cada día.<br/><br/>
-        En cada flor veo tu sonrisa,<br/>
-        en cada estrella tu mirada.<br/><br/>
-        <span>Gracias por todo, mamita bella.</span><br/>
-        Te amo más de lo que las palabras pueden decir.
-      </p>
+    <div class="msg-card reveal">
+      <span class="icon">💛</span>
+      <h3>Tu color</h3>
+      <p>El amarillo que llevas en el alma ilumina cada cuarto en el que entras y calienta cada corazón a tu alrededor.</p>
     </div>
 
-    <div class="signature">Con amor infinito 💕</div>
-    <div class="ribbon">Siempre en mi corazón</div>
+    <div class="msg-card reveal">
+      <span class="icon">💪</span>
+      <h3>Mujer Luchadora</h3>
+      <p>Cada obstáculo que enfrentaste lo convertiste en escalón. Sacas adelante a tu familia con una fuerza que admiro cada día.</p>
+    </div>
+
+    <div class="msg-card reveal">
+      <span class="icon">👩‍👦</span>
+      <h3>Mamá Perfecta</h3>
+      <p>El 15 de abril de 2014 cambiaste mi mundo. Desde ese primer amanecer en Santo Domingo me has dado todo tu amor.</p>
+    </div>
+
+    <div class="msg-card reveal">
+      <span class="icon">🌿</span>
+      <h3>Tu sueño</h3>
+      <p>Algún día vivirás rodeada de naturaleza, lejos del ruido de la ciudad, en la paz que mereces después de tanto dar.</p>
+    </div>
+
+    <div class="msg-card reveal">
+      <span class="icon">👑</span>
+      <h3>Mujer Virtuosa</h3>
+      <p>Responsable, dedicada y excelente en todo lo que haces. Eres el mejor ejemplo que alguien puede tener en su vida.</p>
+    </div>
 
   </div>
+</section>
+
+<!-- ═══ GALLERY ═══ -->
+<section id="galeria">
+  <h2 class="section-title reveal">Nuestra Historia en Fotos</h2>
+  <div class="gallery-grid">
+
+    <div class="photo-item featured reveal" onclick="openLightbox(this)">
+      <img src="fotos/girasoles.jpg" alt="Entre los girasoles" loading="lazy" />
+      <div class="overlay"><span>🌻 En tu campo favorito</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/sombrero.jpg" alt="Con el sombrero" loading="lazy" />
+      <div class="overlay"><span>✨ Siempre bella</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/profesional.jpg" alt="Profesional" loading="lazy" />
+      <div class="overlay"><span>💼 Mujer dedicada</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/selfie.jpg" alt="Selfie" loading="lazy" />
+      <div class="overlay"><span>💛 Tu sonrisa</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/sonrisa.jpg" alt="Sonrisa hermosa" loading="lazy" />
+      <div class="overlay"><span>😊 Radiante</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/mama_bebe.jpg" alt="Con el bebé" loading="lazy" />
+      <div class="overlay"><span>👶 Mi primer abrazo</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/mama_nino.jpg" alt="De compras juntos" loading="lazy" />
+      <div class="overlay"><span>🛒 Juntos siempre</span></div>
+    </div>
+
+    <div class="photo-item reveal" onclick="openLightbox(this)">
+      <img src="fotos/mama_hijo.jpg" alt="Mamá e hijo" loading="lazy" />
+      <div class="overlay"><span>💙 Juntos crecemos</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ TIMELINE ═══ -->
+<section id="historia">
+  <h2 class="section-title reveal">Tu Hermosa Historia</h2>
+  <div class="timeline">
+
+    <div class="tl-item reveal">
+      <p class="year">24 · agosto · 1987</p>
+      <h3>🌅 Llegó una estrella al mundo</h3>
+      <p>En el Hospital Doctor Cabrera, San Juan, República Dominicana, nació la mujer más valiente, más amorosa y más luminosa que conozco.</p>
+    </div>
+
+    <div class="tl-item reveal">
+      <p class="year">El camino</p>
+      <h3>🌻 Una vida enfocada en el bien</h3>
+      <p>Siempre con el amarillo en el alma y los girasoles cerca, construiste una vida dedicada al bienestar, la familia y el crecimiento personal.</p>
+    </div>
+
+    <div class="tl-item reveal">
+      <p class="year">15 · abril · 2014 · 7:00 AM</p>
+      <h3>👶 El día más importante</h3>
+      <p>En la Clínica Centro Médico Moderno, Santo Domingo, te convertiste en mamá. A las 7 de la mañana, el mundo se llenó de amor infinito.</p>
+    </div>
+
+    <div class="tl-item reveal">
+      <p class="year">Hoy</p>
+      <h3>💪 Mujer que saca a su familia adelante</h3>
+      <p>Cada día luchas con una fuerza extraordinaria. Eres mamá, profesional, soñadora. Tu hijo te ve y aprende lo que es la grandeza.</p>
+    </div>
+
+    <div class="tl-item reveal">
+      <p class="year">El sueño</p>
+      <h3>🌿 Tu lugar en la naturaleza</h3>
+      <p>Lejos del ruido, entre flores y aire puro — ese es el hogar que te mereces, y ese sueño se va a cumplir, mamita. Lo prometo.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p class="love">Te amo, Mamita Bella 💛🌻</p>
+  <p style="font-family:'Dancing Script',cursive;font-size:1.2rem;color:rgba(245,197,24,0.6);margin-bottom:1rem;">
+    Con amor infinito, tu hijo
+  </p>
+  <p>Esdras Luz Sánchez Peña · La mujer más extraordinaria que conozco</p>
+</footer>
+
+<!-- ═══ LIGHTBOX ═══ -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="" />
 </div>
 
 <script>
-  /* ── Stars ── */
-  const starsEl = document.getElementById('stars');
-  for (let i = 0; i < 160; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 3 + 0.5;
-    s.style.cssText = `
-      width:${size}px;height:${size}px;
-      top:${Math.random()*100}%;left:${Math.random()*100}%;
-      --d:${(Math.random()*3+1.5).toFixed(1)}s;
-      animation-delay:${(Math.random()*4).toFixed(1)}s;
-    `;
-    starsEl.appendChild(s);
-  }
+/* ─── Fireflies / stars on canvas ─── */
+const canvas = document.getElementById('bg-canvas');
+const ctx    = canvas.getContext('2d');
+let W, H, flies;
 
-  /* ── Petals ── */
-  const petalsContainer = document.getElementById('petals');
-  const petalEmojis = ['🌸','🌺','🌹','💮','🌷','✿'];
-  for (let i = 0; i < 22; i++) {
-    const p = document.createElement('div');
-    p.className = 'petal';
-    p.textContent = petalEmojis[Math.floor(Math.random()*petalEmojis.length)];
-    const dur = (Math.random()*8+7).toFixed(1);
-    p.style.cssText = `
-      left:${Math.random()*100}%;
-      --fd:${dur}s;
-      --fx:${(Math.random()*120-60).toFixed(0)}px;
-      animation-delay:${(Math.random()*10).toFixed(1)}s;
-      font-size:${(Math.random()*1+0.9).toFixed(1)}rem;
-    `;
-    petalsContainer.appendChild(p);
-  }
-
-  /* ── 3D Flower petals ── */
-  const flower = document.getElementById('flower');
-  const petalColors = [
-    ['#f9a8d4','#ec4899'],
-    ['#fca5a5','#ef4444'],
-    ['#fdba74','#f97316'],
-    ['#c4b5fd','#8b5cf6'],
-    ['#6ee7b7','#10b981'],
-    ['#fde68a','#f59e0b'],
-    ['#a5b4fc','#6366f1'],
-    ['#fbcfe8','#db2777'],
-  ];
-  const count = 8;
-  for (let i = 0; i < count; i++) {
-    const p = document.createElement('div');
-    p.className = 'petal-3d';
-    const angle = (360 / count) * i;
-    const [c1, c2] = petalColors[i % petalColors.length];
-    p.style.cssText = `
-      transform: rotate(${angle}deg) translateY(-38px);
-      background: radial-gradient(ellipse at 50% 30%, ${c1}, ${c2});
-      box-shadow: 0 0 12px ${c2}88;
-      opacity: 0.92;
-    `;
-    flower.appendChild(p);
-  }
-
-  /* ── Sparkle dots inside card ── */
-  const sparklesEl = document.getElementById('sparkles');
-  for (let i = 0; i < 18; i++) {
-    const s = document.createElement('div');
-    s.className = 'sp';
-    const size = Math.random() * 5 + 2;
-    s.style.cssText = `
-      width:${size}px;height:${size}px;
-      top:${Math.random()*100}%;left:${Math.random()*100}%;
-      --sd:${(Math.random()*2+1).toFixed(1)}s;
-      --ss:${(Math.random()*3).toFixed(1)}s;
-    `;
-    sparklesEl.appendChild(s);
-  }
-
-  /* ── Subtle mouse parallax ── */
-  document.addEventListener('mousemove', e => {
-    const cx = window.innerWidth  / 2;
-    const cy = window.innerHeight / 2;
-    const rx = ((e.clientY - cy) / cy) * 8;
-    const ry = ((e.clientX - cx) / cx) * -8;
-    document.getElementById('scene').style.transform =
-      `rotateX(${rx}deg) rotateY(${ry}deg)`;
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+function initFlies() {
+  flies = Array.from({length: 120}, () => ({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    r: Math.random() * 1.8 + 0.3,
+    a: Math.random() * Math.PI * 2,
+    s: Math.random() * 0.4 + 0.1,
+    alpha: Math.random(),
+    da: (Math.random() - 0.5) * 0.015,
+  }));
+}
+function drawFlies() {
+  ctx.clearRect(0, 0, W, H);
+  flies.forEach(f => {
+    f.alpha += f.da;
+    if (f.alpha > 1 || f.alpha < 0) f.da *= -1;
+    f.x += Math.cos(f.a) * f.s;
+    f.y += Math.sin(f.a) * f.s;
+    f.a += (Math.random() - 0.5) * 0.05;
+    if (f.x < 0) f.x = W; if (f.x > W) f.x = 0;
+    if (f.y < 0) f.y = H; if (f.y > H) f.y = 0;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(245,197,24,${f.alpha * 0.8})`;
+    ctx.fill();
   });
-  document.addEventListener('mouseleave', () => {
-    document.getElementById('scene').style.transform = '';
-  });
+  requestAnimationFrame(drawFlies);
+}
+window.addEventListener('resize', () => { resize(); initFlies(); });
+resize(); initFlies(); drawFlies();
+
+/* ─── Floating petals ─── */
+const wrap = document.getElementById('petals-wrap');
+const symbols = ['🌻','🌸','🌼','🌺','✿','💛'];
+for (let i = 0; i < 20; i++) {
+  const el = document.createElement('div');
+  el.className = 'petal';
+  el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+  const dur = (Math.random() * 10 + 8).toFixed(1);
+  el.style.cssText = `
+    left:${Math.random()*100}%;
+    font-size:${(Math.random()*1.2+0.8).toFixed(1)}rem;
+    --fd:${dur}s;
+    --fx:${(Math.random()*120-60).toFixed(0)}px;
+    --delay:-${(Math.random()*12).toFixed(1)}s;
+  `;
+  wrap.appendChild(el);
+}
+
+/* ─── 3D Sunflower petals ─── */
+const flower = document.getElementById('flower3d');
+const petalColors = [
+  ['#fef08a','#ca8a04'],
+  ['#fde047','#b45309'],
+  ['#fbbf24','#d97706'],
+  ['#f59e0b','#92400e'],
+  ['#fef9c3','#a16207'],
+  ['#fef08a','#78350f'],
+  ['#fde047','#ca8a04'],
+  ['#fbbf24','#b45309'],
+  ['#f59e0b','#d97706'],
+  ['#fef08a','#92400e'],
+  ['#fde047','#a16207'],
+  ['#fbbf24','#78350f'],
+];
+for (let i = 0; i < 12; i++) {
+  const p = document.createElement('div');
+  p.className = 'petal3';
+  const angle = (360 / 12) * i;
+  const [c1, c2] = petalColors[i];
+  p.style.cssText = `
+    transform: rotate(${angle}deg) translateY(-45px);
+    background: radial-gradient(ellipse at 50% 20%, ${c1}, ${c2});
+    box-shadow: 0 0 10px ${c2}66;
+    opacity: 0.95;
+  `;
+  flower.appendChild(p);
+}
+
+/* ─── Mouse parallax ─── */
+const card = document.getElementById('hero-card');
+document.addEventListener('mousemove', e => {
+  const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  const rx = ((e.clientY - cy) / cy) * 10;
+  const ry = ((e.clientX - cx) / cx) * -10;
+  card.style.transform = `translateY(0) rotateX(${rx}deg) rotateY(${ry}deg)`;
+});
+document.addEventListener('mouseleave', () => {
+  card.style.transform = '';
+});
+
+/* ─── Scroll reveal ─── */
+const revealEls = document.querySelectorAll('.reveal');
+const observer  = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => observer.observe(el));
+
+/* ─── Lightbox ─── */
+function openLightbox(item) {
+  const img = item.querySelector('img');
+  document.getElementById('lightbox-img').src = img.src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 </script>
 </body>
 </html>
